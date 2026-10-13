@@ -1,0 +1,2415 @@
+<!DOCTYPE html>
+<html lang="fr" data-design="sommelier">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ma Cave</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script>
+  // Thème appliqué avant l'affichage pour éviter un flash
+  const t = localStorage.getItem('theme');
+  if (t) document.documentElement.dataset.theme = t;
+</script>
+<style>
+  :root {
+    color-scheme: light;
+    --bordeaux: #6d1a2c;
+    --bordeaux-clair: #8e2a40;
+    --accent: #6d1a2c;
+    --entete: #6d1a2c;
+    --fond: #f7f3ee;
+    --carte: #ffffff;
+    --texte: #2b2024;
+    --gris: #6f6568;
+    --muted: #898781;
+    --bord: #e4dcd5;
+    --survol: #f3e9ec;
+    --doux: #faf7f4;
+    --rouge: #b3261e;
+    /* Graphiques */
+    --grille: #e1e0d9;
+    --axe: #c3c2b7;
+    --s1: #2a78d6;
+    --s1-doux: rgba(42,120,214,.12);
+    --neutre: #c3c2b7;
+    --c-rouge: #6250d6;
+    --c-rose: #e87ba4;
+    --c-blanc: #eda100;
+    --c-bulles: #1baf7a;
+    --c-liquoreux: #eb6834;
+    --c-autre: #a8a69e;
+    /* Statuts */
+    --ok: #0ca30c;
+    --attention: #fab219;
+    --serieux: #ec835a;
+    --critique: #d03b3b;
+    --b-jeune-fd: #e8f0fb; --b-jeune: #1c5cab;
+    --b-apogee-fd: #e3f4ea; --b-apogee: #006300;
+    --b-passe-fd: #fbe9e7; --b-passe: #a82a22;
+    --b-bas-fd: #fdf0dc; --b-bas: #8a5300;
+    --b-inconnu-fd: #eeeeec; --b-inconnu: #6f6568;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --accent: #d0738a; --entete: #4a1220; --bordeaux-clair: #5e1a2b;
+      --fond: #0d0d0d; --carte: #1a1a19; --texte: #f0efec; --gris: #c3c2b7; --muted: #898781;
+      --bord: #2c2c2a; --survol: #2a2124; --doux: #222220;
+      --grille: #2c2c2a; --axe: #383835; --s1: #3987e5; --s1-doux: rgba(57,135,229,.18); --neutre: #4a4a46;
+      --c-rouge: #9085e9; --c-rose: #d55181; --c-blanc: #c98500; --c-bulles: #199e70; --c-liquoreux: #d95926; --c-autre: #6e6d68;
+      --b-jeune-fd: #1b2a40; --b-jeune: #86b6ef;
+      --b-apogee-fd: #15301d; --b-apogee: #5fd35f;
+      --b-passe-fd: #3a1b19; --b-passe: #f08c84;
+      --b-bas-fd: #3a2b10; --b-bas: #fab219;
+      --b-inconnu-fd: #2c2c2a; --b-inconnu: #c3c2b7;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --accent: #d0738a; --entete: #4a1220; --bordeaux-clair: #5e1a2b;
+    --fond: #0d0d0d; --carte: #1a1a19; --texte: #f0efec; --gris: #c3c2b7; --muted: #898781;
+    --bord: #2c2c2a; --survol: #2a2124; --doux: #222220;
+    --grille: #2c2c2a; --axe: #383835; --s1: #3987e5; --s1-doux: rgba(57,135,229,.18); --neutre: #4a4a46;
+    --c-rouge: #9085e9; --c-rose: #d55181; --c-blanc: #c98500; --c-bulles: #199e70; --c-liquoreux: #d95926; --c-autre: #6e6d68;
+    --b-jeune-fd: #1b2a40; --b-jeune: #86b6ef;
+    --b-apogee-fd: #15301d; --b-apogee: #5fd35f;
+    --b-passe-fd: #3a1b19; --b-passe: #f08c84;
+    --b-bas-fd: #3a2b10; --b-bas: #fab219;
+    --b-inconnu-fd: #2c2c2a; --b-inconnu: #c3c2b7;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  .ico-bouteille { width: 1.45em; height: 1.45em; vertical-align: -0.38em; margin: 0 -0.12em 0 -0.15em; }
+  mark { background: #ffe066; color: inherit; border-radius: 3px; padding: 0 1px; }
+  :root[data-theme="dark"] mark { background: #7a5c00; }
+  @media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) mark { background: #7a5c00; } }
+  .extrait { font-size: .82rem; color: var(--gris); font-style: italic; margin-top: 2px; font-weight: normal; }
+  body {
+    margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--fond); color: var(--texte);
+  }
+  header {
+    background: var(--entete); color: #fff; padding: 14px 24px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 16px; justify-content: space-between;
+  }
+  header h1 { margin: 0; font-size: 1.45rem; font-weight: 600; }
+  .stats { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
+  .stat { text-align: right; }
+  .stat .v { font-size: 1.25rem; font-weight: 700; }
+  .stat .l { font-size: .72rem; opacity: .8; text-transform: uppercase; letter-spacing: .05em; }
+  .btn-theme { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.3); padding: 6px 10px; font-size: 1rem; }
+  .btn-theme:hover { background: rgba(255,255,255,.22); }
+
+  nav.onglets { display: flex; gap: 4px; padding: 0 24px; background: var(--entete); overflow-x: auto; }
+  nav.onglets button {
+    background: none; border: none; border-radius: 8px 8px 0 0; color: rgba(255,255,255,.75);
+    padding: 10px 16px; font-size: .95rem; white-space: nowrap;
+  }
+  nav.onglets button:hover { background: rgba(255,255,255,.08); color: #fff; }
+  nav.onglets button.actif { background: var(--fond); color: var(--texte); font-weight: 600; }
+
+  main { max-width: 1280px; margin: 0 auto; padding: 20px; }
+  .barre { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; align-items: center; }
+  .barre input, .barre select { padding: 9px 12px; border: 1px solid var(--bord); border-radius: 8px; font-size: .95rem; background: var(--carte); color: var(--texte); }
+  .barre input[type=search] { flex: 1; min-width: 200px; }
+  button {
+    padding: 9px 16px; border-radius: 8px; border: 1px solid var(--bordeaux); background: var(--bordeaux);
+    color: #fff; font-size: .95rem; cursor: pointer; font-family: inherit;
+  }
+  button:hover { background: var(--bordeaux-clair); }
+  button.sec { background: var(--carte); color: var(--accent); border-color: var(--accent); }
+  button.sec:hover { background: var(--survol); }
+  button.lien { background: none; border: none; color: var(--accent); padding: 4px 6px; font-size: .85rem; }
+  button.lien:hover { background: var(--survol); }
+  button.danger { background: var(--carte); color: var(--rouge); border-color: var(--rouge); }
+  label.chk { display: flex; align-items: center; gap: 6px; font-size: .9rem; color: var(--gris); }
+  .vue { display: none; }
+  .vue.active { display: block; }
+  .num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+
+  /* Éléments communs */
+  .sous { color: var(--gris); font-size: .85rem; }
+  .pastille { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; flex-shrink: 0; }
+  .badge { font-size: .72rem; padding: 2px 8px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
+  .b-jeune { background: var(--b-jeune-fd); color: var(--b-jeune); }
+  .b-apogee { background: var(--b-apogee-fd); color: var(--b-apogee); }
+  .b-passe { background: var(--b-passe-fd); color: var(--b-passe); }
+  .b-bas { background: var(--b-bas-fd); color: var(--b-bas); }
+  .b-inconnu { background: var(--b-inconnu-fd); color: var(--b-inconnu); }
+  .vide { text-align: center; color: var(--gris); padding: 60px 20px; }
+
+
+  /* Vue lignes */
+  .tableau-wrap { background: var(--carte); border: 1px solid var(--bord); border-radius: 12px; overflow: auto; max-height: calc(100vh - 260px); }
+  table.lignes { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  table.lignes th {
+    position: sticky; top: 0; background: var(--carte); text-align: left; font-weight: 600; color: var(--gris);
+    padding: 10px 10px; border-bottom: 1px solid var(--bord); cursor: pointer; user-select: none; white-space: nowrap; font-size: .8rem;
+  }
+  table.lignes th:hover { color: var(--texte); }
+  table.lignes th.num { text-align: right; }
+  table.lignes th .fleche { color: var(--accent); }
+  table.lignes td { padding: 8px 10px; border-bottom: 1px solid var(--bord); vertical-align: middle; }
+  table.lignes tbody tr { cursor: pointer; }
+  table.lignes tbody tr:hover { background: var(--survol); }
+  table.lignes tbody tr.epuise { opacity: .55; }
+  table.lignes tfoot td { position: sticky; bottom: 0; background: var(--doux); font-weight: 600; border-top: 1px solid var(--bord); border-bottom: none; }
+  .vignette { width: 32px; height: 32px; border-radius: 6px; background: var(--doux) center/cover no-repeat; display: inline-block; vertical-align: middle; }
+  .vignette.photo-ok, .grande-photo.photo-ok { cursor: zoom-in; }
+  .vignette.photo-ok:hover { outline: 2px solid var(--accent); outline-offset: 1px; }
+  #visionneuse { position: fixed; inset: 0; z-index: 1000; background: rgba(10,5,8,.88); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; cursor: zoom-out; }
+  #visionneuse.ouvert { display: flex; }
+  #visionneuse img { max-width: 94vw; max-height: calc(100vh - 90px); object-fit: contain; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+  #visionneuse .legende-photo { color: #fff; font-size: .95rem; opacity: .9; }
+  #visionneuse .fermer { color: #fff; top: 14px; right: 18px; }
+  #visionneuse .fermer:hover { background: rgba(255,255,255,.15); }
+
+  /* Tableau de bord */
+  .db-haut { display: grid; grid-template-columns: minmax(260px, 1.4fr) repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .tuile { background: var(--carte); border: 1px solid var(--bord); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+  .tuile .l { font-size: .82rem; color: var(--gris); }
+  .tuile .v { font-size: 1.7rem; font-weight: 600; }
+  .tuile .d { font-size: .8rem; color: var(--muted); }
+  .tuile.hero .v { font-size: 3.2rem; line-height: 1.05; }
+  .tuile .statut { display: inline-flex; align-items: center; gap: 6px; }
+  .tuile .statut i { font-style: normal; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: .7rem; color: #fff; font-weight: 700; }
+  .tuile.cliquable { cursor: pointer; }
+  .tuile.cliquable:hover { border-color: var(--accent); }
+  .db-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 16px; }
+  .graph { background: var(--carte); border: 1px solid var(--bord); border-radius: 12px; padding: 16px 18px; min-width: 0; }
+  .graph .tete { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+  .graph h3 { margin: 0; font-size: 1rem; font-weight: 600; }
+  .graph .st { font-size: .8rem; color: var(--gris); margin-top: 2px; }
+  .graph svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .graph svg text { font-family: inherit; }
+  .graph .t-axe { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .graph .t-lab { fill: var(--gris); font-size: 12px; }
+  .graph .t-val { fill: var(--texte); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .graph .grille-l { stroke: var(--grille); stroke-width: 1; }
+  .graph .axe-l { stroke: var(--axe); stroke-width: 1; }
+  .graph .m .barre-m { transition: opacity .12s; }
+  .graph svg:hover .m:not(:hover) .barre-m { opacity: .45; }
+  .graph .hit { fill: transparent; cursor: default; outline: none; }
+  .graph .hit.clic { cursor: pointer; }
+  .graph .hit:focus-visible { stroke: var(--accent); stroke-width: 2; }
+  .graph .vide-g { color: var(--muted); font-size: .9rem; padding: 30px 0; text-align: center; }
+  .legende { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .82rem; color: var(--gris); margin-top: 10px; }
+  .legende span { display: inline-flex; align-items: center; }
+  .legende .cle { width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
+  .rep-couleur { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px 16px; margin-top: 12px; }
+  .rep-couleur div { display: flex; align-items: center; gap: 6px; font-size: .88rem; cursor: pointer; padding: 4px 6px; border-radius: 6px; }
+  .rep-couleur div:hover { background: var(--survol); }
+  .rep-couleur b { margin-left: auto; font-variant-numeric: tabular-nums; }
+  .rep-couleur small { color: var(--muted); min-width: 40px; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  table.donnees { width: 100%; border-collapse: collapse; font-size: .85rem; margin-top: 8px; }
+  table.donnees th, table.donnees td { padding: 5px 8px; border-bottom: 1px solid var(--bord); text-align: left; }
+  table.donnees th { color: var(--gris); font-weight: 600; }
+  .prio { list-style: none; margin: 0; padding: 0; }
+  .prio li { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-bottom: 1px solid var(--bord); cursor: pointer; font-size: .9rem; border-radius: 6px; }
+  .prio li:hover { background: var(--survol); }
+  .prio li:last-child { border-bottom: none; }
+  .prio .n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Carte des vins */
+  .carte-wrap { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, 1fr); gap: 16px; align-items: start; }
+  .carte-svg { background: var(--carte); border: 1px solid var(--bord); border-radius: 12px; padding: 14px; }
+  .carte-svg svg { width: 100%; height: auto; display: block; }
+  .carte-svg .dep, .carte-svg .reg, .carte-svg .pays, .carte-svg .app { vector-effect: non-scaling-stroke; }
+  .carte-svg .dep.estompe { opacity: .35; }
+  .carte-svg .app { fill: var(--s1); stroke: var(--carte); stroke-width: 2; cursor: pointer; outline: none; }
+  .carte-svg .app:hover, .carte-svg .app:focus-visible { fill: color-mix(in srgb, var(--s1) 75%, var(--texte)); }
+  .carte-svg .app.sel { stroke: var(--texte); stroke-width: 2.5; }
+  .carte-svg .dep { stroke: var(--carte); stroke-width: .4; stroke-linejoin: round; transition: opacity .12s; }
+  .carte-svg .dep.hors { fill: color-mix(in srgb, var(--neutre) 14%, var(--carte)); }
+  .carte-svg .reg { fill: none; stroke: var(--carte); stroke-width: 1.8; stroke-linejoin: round; pointer-events: none; }
+  .carte-svg .reg.sel { stroke: var(--texte); stroke-width: 1.3; }
+  .carte-svg .pays { fill: none; stroke: var(--axe); stroke-width: .8; stroke-linejoin: round; pointer-events: none; }
+  .carte-svg .dep.vin { cursor: pointer; }
+  .carte-svg svg.focus .dep.vin:not(.actif) { opacity: .4; }
+  .carte-svg .etiq { pointer-events: none; paint-order: stroke; stroke: var(--carte); stroke-width: 3px; stroke-linejoin: round; }
+  .carte-svg .etiq .n1 { font-size: 12px; font-weight: 600; fill: var(--texte); }
+  .carte-svg .etiq .n2 { font-size: 10.5px; fill: var(--gris); font-variant-numeric: tabular-nums; }
+  .carte-svg .etiq.vide-r .n1 { fill: var(--muted); font-weight: 500; }
+  .carte-svg .etiq.etiq-app .n1 { font-size: 1em; font-weight: 600; }
+  .carte-svg .etiq.etiq-app .n2 { font-size: .9em; font-weight: 400; }
+  .carte-svg .rappel { stroke: var(--gris); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
+  .degrade { width: 120px; height: 10px; border-radius: 3px; display: inline-block; margin: 0 6px; background: linear-gradient(90deg, color-mix(in srgb, var(--s1) 20%, var(--carte)), var(--s1)); }
+  .carte-panneau { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .carte-panneau .graph { padding: 14px 16px; }
+  table.regions { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  table.regions th { text-align: left; color: var(--gris); font-weight: 600; font-size: .78rem; padding: 6px 6px; border-bottom: 1px solid var(--bord); }
+  table.regions td { padding: 6px 6px; border-bottom: 1px solid var(--bord); }
+  table.regions tbody tr { cursor: pointer; outline: none; }
+  table.regions tbody tr:hover, table.regions tbody tr:focus-visible { background: var(--survol); }
+  table.regions tbody tr.sel { background: var(--survol); box-shadow: inset 3px 0 0 var(--accent); }
+  table.regions tr.zero td { color: var(--muted); }
+  @media (max-width: 900px) { .carte-wrap { grid-template-columns: 1fr; } }
+
+  /* Historique */
+  .hist-tuiles { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+  .hist-mois { margin-bottom: 20px; }
+  .hist-mois h3 { font-size: 1rem; margin: 0 0 8px; text-transform: capitalize; }
+  .hist-mois h3 .sous { text-transform: none; font-weight: 400; }
+  .hist { display: flex; gap: 14px; background: var(--carte); border: 1px solid var(--bord); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; outline: none; }
+  .hist:hover, .hist:focus-visible { border-color: var(--accent); }
+  .hist-date { width: 44px; flex-shrink: 0; text-align: center; display: flex; flex-direction: column; color: var(--gris); font-size: .75rem; }
+  .hist-date b { font-size: 1.4rem; color: var(--texte); font-weight: 600; line-height: 1.1; }
+  .hist-corps { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .hist-tete { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+  .hist-tete .pastille { margin-right: 0; }
+  .hist-tete .etoiles { margin-left: auto; }
+  .hist-com { white-space: pre-wrap; font-size: .92rem; line-height: 1.45; }
+  .hist-suppr { align-self: flex-start; flex-shrink: 0; background: none; border: none; padding: 6px; margin: -4px -6px 0 0; border-radius: 8px; color: var(--muted); line-height: 0; cursor: pointer; }
+  .hist-suppr:hover, .hist-suppr:focus-visible { background: var(--b-passe-fd); color: var(--b-passe); }
+  .hist-suppr svg { width: 18px; height: 18px; }
+
+  /* Fenêtre de confirmation */
+  body.modale-ouverte { overflow: hidden; }
+  #m-confirm { align-items: center; }
+  #m-confirm .modale-confirm { max-width: 420px; text-align: center; padding: 28px 26px 22px; }
+  .modale-confirm h2 { margin: 12px 0 8px; padding: 0; font-size: 1.2rem; color: var(--texte); }
+  .modale-confirm p { margin: 0; color: var(--gris); white-space: pre-line; line-height: 1.5; font-size: .95rem; }
+  .modale-confirm .actions { justify-content: center; margin-top: 22px; }
+  .modale-confirm .actions button { min-width: 120px; }
+  .confirm-icone { width: 52px; height: 52px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .confirm-icone svg { width: 26px; height: 26px; }
+  .confirm-icone.danger { background: var(--b-passe-fd); color: var(--b-passe); }
+  .confirm-icone.info { background: var(--b-jeune-fd); color: var(--b-jeune); }
+  button.btn-danger { background: #b3261e; border-color: #b3261e; color: #fff; }
+  button.btn-danger:hover { background: #8f1d17; border-color: #8f1d17; }
+
+  /* Animations des fenêtres (ouverture / fermeture) */
+  @keyframes fondApparait { from { opacity: 0; } }
+  @keyframes fondDisparait { to { opacity: 0; } }
+  @keyframes fenetreApparait { from { opacity: 0; transform: translateY(16px) scale(.97); } }
+  @keyframes fenetreDisparait { to { opacity: 0; transform: translateY(22px) scale(.94); } }
+  @keyframes confirmApparait { 0% { opacity: 0; transform: scale(.82); } 65% { opacity: 1; transform: scale(1.035); } 100% { transform: none; } }
+  @keyframes confirmSeRetracte { to { opacity: 0; transform: scale(.86); } }
+  @keyframes confirmTombe {
+    0% { transform: none; }
+    22% { transform: translateY(-8px) rotate(-1.5deg); }
+    100% { opacity: 0; transform: translateY(90px) rotate(6deg) scale(.9); }
+  }
+  @keyframes corbeilleSecoue { 0%, 100% { transform: none; } 20% { transform: rotate(-14deg); } 40% { transform: rotate(11deg); } 60% { transform: rotate(-7deg); } 80% { transform: rotate(3deg); } }
+  @keyframes photoApparait { from { opacity: 0; transform: scale(.9); } }
+  @keyframes photoDisparait { to { opacity: 0; transform: scale(.82); } }
+  @keyframes ligneDisparait {
+    35% { opacity: 0; transform: translateX(48px); }
+    100% { opacity: 0; transform: translateX(64px); max-height: 0; padding-top: 0; padding-bottom: 0; margin-bottom: 0; border-width: 0; }
+  }
+  .fond-modale.ouvert { animation: fondApparait .22s ease-out; }
+  .fond-modale.ouvert > .modale { animation: fenetreApparait .3s cubic-bezier(.2, .9, .3, 1.1); }
+  .fond-modale.fermeture { animation: fondDisparait .24s ease-in forwards; pointer-events: none; }
+  .fond-modale.fermeture > .modale { animation: fenetreDisparait .22s ease-in forwards; }
+  #m-confirm.ouvert > .modale { animation: confirmApparait .34s cubic-bezier(.2, .9, .3, 1.2); }
+  #m-confirm.ouvert .confirm-icone.danger svg { animation: corbeilleSecoue .6s .18s ease-in-out; }
+  #m-confirm.fermeture > .modale { animation: confirmSeRetracte .2s ease-in forwards; }
+  #m-confirm.fermeture.validee { animation-duration: .34s; }
+  #m-confirm.fermeture.validee > .modale { animation: confirmTombe .34s cubic-bezier(.5, 0, .75, 0) forwards; }
+  #visionneuse.ouvert { animation: fondApparait .2s ease-out; }
+  #visionneuse.ouvert img { animation: photoApparait .28s cubic-bezier(.2, .9, .3, 1.1); }
+  #visionneuse.fermeture { animation: fondDisparait .24s ease-in forwards; pointer-events: none; }
+  #visionneuse.fermeture img { animation: photoDisparait .22s ease-in forwards; }
+  .hist.disparition, .sortie.disparition { animation: ligneDisparait .4s ease-in forwards; overflow: hidden; pointer-events: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .fond-modale, .fond-modale > .modale, #visionneuse, #visionneuse img, .hist, .sortie, .confirm-icone svg { animation: none !important; }
+  }
+
+  /* Listes déroulantes personnalisées (la vraie liste <select> reste cachée derrière) */
+  .liste-native { display: none !important; }
+  .liste { position: relative; display: inline-flex; vertical-align: middle; }
+  form .liste { display: flex; }
+  .liste-bouton {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-width: 10.5em;
+    padding: 9px 12px; border: 1px solid var(--bord); border-radius: 10px; background: var(--carte); color: var(--texte);
+    font: inherit; font-size: .95rem; text-align: left; cursor: pointer; transition: border-color .15s;
+  }
+  form .liste-bouton { min-width: 0; padding: 9px 10px; }
+  .liste-bouton:hover { background: var(--carte); border-color: color-mix(in srgb, var(--accent) 45%, var(--bord)); }
+  .liste.ouverte .liste-bouton, .liste-bouton:focus-visible { border-color: var(--accent); outline: 2px solid color-mix(in srgb, var(--accent) 30%, transparent); outline-offset: 1px; }
+  .liste-valeur { display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .liste-chevron { width: 16px; height: 16px; flex-shrink: 0; color: var(--muted); transition: transform .2s ease; }
+  .liste.ouverte .liste-chevron { transform: rotate(180deg); color: var(--accent); }
+  .liste-menu {
+    position: absolute; left: 0; top: calc(100% + 6px); z-index: 60; min-width: 100%; max-height: 300px; overflow: auto;
+    background: var(--carte); border: 1px solid var(--bord); border-radius: 12px; padding: 6px; outline: none;
+    box-shadow: 0 14px 36px rgba(36,16,22,.18), 0 2px 6px rgba(36,16,22,.06); display: none; transform-origin: top center;
+  }
+  .liste.vers-le-haut .liste-menu { top: auto; bottom: calc(100% + 6px); transform-origin: bottom center; }
+  .liste.ouverte .liste-menu { display: block; animation: listeApparait .17s cubic-bezier(.2, .9, .3, 1.1); }
+  .liste.fermeture .liste-menu { display: block; animation: listeDisparait .12s ease-in forwards; pointer-events: none; }
+  @keyframes listeApparait { from { opacity: 0; transform: translateY(-6px) scale(.96); } }
+  @keyframes listeDisparait { to { opacity: 0; transform: translateY(-4px) scale(.97); } }
+  .liste-option { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; white-space: nowrap; font-size: .93rem; }
+  .liste-option.active { background: var(--survol); }
+  .liste-option.sel { color: var(--accent); font-weight: 600; }
+  .liste-option .coche { margin-left: auto; padding-left: 16px; display: flex; visibility: hidden; }
+  .liste-option .coche svg { width: 15px; height: 15px; }
+  .liste-option.sel .coche { visibility: visible; }
+  .liste .pastille { margin: 0; }
+  @media (max-width: 600px) {
+    .barre .liste { flex: 1 1 40%; min-width: 0; }
+    .barre .liste-bouton { min-width: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .liste-menu { animation: none !important; } .liste-chevron { transition: none; } }
+
+  /* Formulaire d'ajout / modification d'un vin */
+  /* La fenêtre ne dépasse jamais la hauteur de l'écran : en-tête et boutons fixes, seul le contenu défile */
+  #m-form { align-items: center; padding: 16px 12px; }
+  #m-form .modale-form { max-width: 1080px; padding: 0; overflow: hidden; display: flex; flex-direction: column; max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); }
+  #form-vin { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+  #form-vin .form-grille { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .form-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 0 26px; border-bottom: 1px solid var(--bord); }
+  .form-duo fieldset { border-bottom: none !important; }
+  /* Écrans d'ordinateur portable et plus : champs sur 4 colonnes */
+  @media (min-width: 1000px) {
+    .form-sections > fieldset > .champs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    /* Appellation plus large ; Région, Millésime et Degré resserrés */
+    .form-sections > fieldset.section-vin > .champs { grid-template-columns: minmax(0, 2.3fr) minmax(0, 1.3fr) minmax(0, .9fr) minmax(0, 1fr); }
+    .form-grille { grid-template-columns: 210px minmax(0, 1fr); }
+  }
+  /* Écrans très bas (1280 × 700 environ) : Notes un peu moins hautes, sections plus serrées */
+  @media (max-height: 760px) {
+    #m-form #form-vin textarea { min-height: 76px; height: 76px; }
+    #m-form .form-sections > * + * { margin-top: 2px; }
+    #m-form .form-grille { padding-bottom: 14px; }
+  }
+  /* Écrans peu hauts (portable 14 pouces avec barres du navigateur et de Windows) : tout se resserre */
+  @media (max-height: 900px) {
+    .form-grille { padding-top: 18px; padding-bottom: 16px; }
+    .form-sections legend { padding: 4px 0 6px; }
+    .form-sections fieldset { padding-bottom: 10px; }
+    .form-sections .champs { gap: 8px 14px; }
+    #form-vin input, #form-vin textarea { padding-top: 7px !important; padding-bottom: 7px !important; }
+    .champ-nom { padding-top: 8px !important; padding-bottom: 8px !important; }
+    #form-vin textarea { min-height: 84px; height: 84px; }
+    .form-cote { gap: 8px; }
+    .form-champ { margin-top: 2px; gap: 6px; }
+    .aide { font-size: .7rem; }
+    #form-vin .zone-photo { aspect-ratio: 1 / 1; }
+  }
+  .form-grille { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 26px; padding: 24px 28px 22px; }
+  .form-cote { display: flex; flex-direction: column; gap: 10px; min-height: 100%; }
+  .zone-photo {
+    position: relative; display: block; aspect-ratio: 3 / 4; border-radius: 14px; overflow: hidden; cursor: pointer;
+    border: 2px dashed color-mix(in srgb, var(--accent) 35%, var(--bord)); background: var(--doux); transition: border-color .15s, background .15s;
+  }
+  .zone-photo:hover, .zone-photo.survol { border-color: var(--accent); background: var(--survol); }
+  .zone-photo input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+  .zone-photo .apercu-photo { position: absolute; inset: 0; width: auto; height: auto; border: none; border-radius: 0; background: center / cover no-repeat; }
+  .zone-photo-vide { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--gris); text-align: center; padding: 14px; }
+  .zone-photo-vide svg { width: 38px; height: 38px; color: var(--accent); opacity: .8; margin-bottom: 4px; }
+  .zone-photo-vide b { color: var(--texte); font-size: .92rem; }
+  .zone-photo-vide small { font-size: .78rem; }
+  .zone-photo-changer {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 10px; text-align: center; font-size: .82rem; font-weight: 600; color: #fff;
+    background: linear-gradient(transparent, rgba(0,0,0,.65)); opacity: 0; transition: opacity .15s;
+  }
+  .zone-photo.a-photo { border-style: solid; border-color: transparent; }
+  .zone-photo.a-photo .zone-photo-vide { display: none; }
+  .zone-photo.a-photo:hover .zone-photo-changer { opacity: 1; }
+  #btn-retirer-photo { align-self: center; }
+  .form-champ { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .form-notes textarea { width: 100%; min-height: 110px; resize: vertical; }
+  .form-libelle { font-size: .85rem; color: var(--gris); }
+  .choix-couleur { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .choix-couleur label { cursor: pointer; }
+  .choix-couleur input { position: absolute; opacity: 0; pointer-events: none; }
+  .choix-couleur span {
+    display: flex; align-items: center; gap: 7px; padding: 7px 10px; border: 1px solid var(--bord); border-radius: 999px;
+    font-size: .86rem; color: var(--texte); background: var(--carte); transition: border-color .15s, background .15s;
+  }
+  .choix-couleur span i { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .choix-couleur label:hover span { border-color: color-mix(in srgb, var(--accent) 45%, var(--bord)); }
+  .choix-couleur input:checked + span { border-color: var(--accent); background: var(--survol); font-weight: 600; box-shadow: inset 0 0 0 1px var(--accent); }
+  .choix-couleur input:focus-visible + span { outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: 1px; }
+  /* Mise en page classique (pas flex) : WebKit surestime la hauteur des <fieldset> dans une colonne flex */
+  .form-sections { display: block; min-width: 0; }
+  .form-sections > * + * { margin-top: 6px; }
+  .form-sections fieldset { border: none; margin: 0; padding: 0 0 14px; border-bottom: 1px solid var(--bord); }
+  .form-sections fieldset:last-child { border-bottom: none; padding-bottom: 6px; }
+  .form-sections legend { padding: 8px 0 10px; font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  .form-sections .champs { gap: 12px 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .form-sections fieldset { min-width: 0; }   /* un fieldset ne rétrécit pas sous son contenu par défaut */
+  .champ-nom { font-size: 1.1rem !important; font-weight: 600; padding: 11px 12px !important; }
+  .avec-unite { position: relative; display: flex; }
+  .avec-unite input { flex: 1; min-width: 0; padding-right: 64px !important; }
+  .avec-unite i { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-style: normal; font-size: .82rem; color: var(--muted); pointer-events: none; }
+  .aide { font-size: .74rem; color: var(--muted); }
+  /* Pas de flèches + / − natives dans le formulaire (elles se collaient aux unités) */
+  #form-vin input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+  #form-vin input[type=number]::-webkit-inner-spin-button, #form-vin input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .visuellement-cache { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  /* Boutons en bas de la colonne de gauche, alignés sur le bas du formulaire */
+  .form-actions { margin-top: auto; padding-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .form-actions button { width: 100%; padding: 11px 16px; font-size: 1rem; }
+  @media (max-width: 760px) {
+    .form-duo { grid-template-columns: 1fr; }
+    .form-duo fieldset:first-child { border-bottom: 1px solid var(--bord) !important; }
+    .form-grille { grid-template-columns: 1fr; gap: 16px; padding: 16px 18px 6px; }
+    .form-cote { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: start; }
+    .form-cote .zone-photo { grid-row: span 2; }
+    .zone-photo-vide small { display: none; }
+    #btn-retirer-photo { grid-column: 1; align-self: start; }
+    .form-champ { margin-top: 0; grid-column: 2; grid-row: 1 / span 2; }
+    .form-cote { display: contents; }
+    .form-grille { grid-template-columns: 120px 1fr; }
+    .form-cote .zone-photo { grid-column: 1; grid-row: 1 / span 2; }
+    .form-sections { grid-column: 1 / -1; }
+    .form-actions { grid-column: 1 / -1; order: 99; position: sticky; bottom: 0; flex-direction: row-reverse; padding: 10px 0; background: var(--carte); }
+  }
+
+  /* Infobulle */
+  #tip {
+    position: fixed; z-index: 50; pointer-events: none; background: var(--carte); color: var(--texte);
+    border: 1px solid var(--bord); border-radius: 8px; padding: 8px 10px; font-size: .82rem; line-height: 1.4;
+    box-shadow: 0 6px 20px rgba(0,0,0,.18); white-space: pre-line; max-width: 280px; display: none;
+  }
+  #tip.vis { display: block; }
+  #tip::first-line { font-weight: 600; }
+
+  /* Modales */
+  .fond-modale { position: fixed; inset: 0; background: rgba(20,10,14,.55); display: none; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 30px 12px; z-index: 10; }
+  .fond-modale.ouvert { display: flex; }
+  .modale { background: var(--carte); border-radius: 14px; width: 100%; max-width: 760px; padding: 24px; position: relative; }
+  .modale h2 { margin-top: 0; color: var(--accent); padding-right: 30px; }
+  .fermer { position: absolute; top: 12px; right: 14px; background: none; border: none; color: var(--gris); font-size: 1.6rem; padding: 4px 10px; }
+  .fermer:hover { background: var(--survol); }
+  form .champs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+  form .plein { grid-column: 1 / -1; }
+  form label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; color: var(--gris); }
+  form input, form select, form textarea { padding: 9px 10px; border: 1px solid var(--bord); border-radius: 8px; font-size: .95rem; color: var(--texte); background: var(--carte); font-family: inherit; }
+  form textarea { resize: vertical; min-height: 70px; }
+  .duo { display: flex; gap: 8px; align-items: center; }
+  .duo input { flex: 1; min-width: 0; }
+  .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; flex-wrap: wrap; }
+  .apercu-photo { width: 120px; height: 120px; border-radius: 8px; background: var(--doux) center/cover no-repeat; border: 1px solid var(--bord); }
+  .detail-tete { display: flex; gap: 20px; flex-wrap: wrap; }
+  .detail-tete .grande-photo { width: 220px; height: 280px; border-radius: 10px; background: var(--doux) center/contain no-repeat; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 4rem; color: var(--muted); }
+  .infos { flex: 1; min-width: 260px; }
+  .infos table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  .infos td { padding: 5px 0; border-bottom: 1px solid var(--bord); }
+  .infos td:first-child { color: var(--gris); width: 45%; }
+  .sorties { margin-top: 22px; }
+  .sortie { border-left: 3px solid var(--accent); padding: 8px 12px; margin-bottom: 10px; background: var(--doux); border-radius: 0 8px 8px 0; }
+  .sortie .entete { display: flex; justify-content: space-between; font-size: .85rem; color: var(--gris); gap: 8px; }
+  .etoiles { color: #d4a017; letter-spacing: 2px; }
+  .choix-etoiles { display: flex; gap: 4px; font-size: 1.8rem; cursor: pointer; user-select: none; }
+  .choix-etoiles span { color: var(--bord); }
+  .choix-etoiles span.on { color: #d4a017; }
+  .suppr-sortie { background: none; border: none; color: var(--gris); padding: 0 4px; font-size: .9rem; }
+  .suppr-sortie:hover { background: none; color: var(--rouge); }
+
+  @media (max-width: 700px) {
+    form .champs { grid-template-columns: 1fr; }
+    .detail-tete .grande-photo { width: 100%; }
+    header, nav.onglets { padding-left: 12px; padding-right: 12px; }
+    main { padding: 12px; }
+    .stat { text-align: left; }
+    .db-grille { grid-template-columns: 1fr; }
+    .db-haut { grid-template-columns: 1fr 1fr; }
+    .tuile.hero { grid-column: 1 / -1; }
+  }
+  /* =====================================================================
+     Design « Sommelier » : uniquement du visuel (couleurs, agencement).
+     Activé par <html data-design="sommelier">, bouton 🎨 pour revenir au design classique.
+     Les couleurs des graphiques ne changent pas (palette vérifiée).
+     ===================================================================== */
+  :root[data-design="sommelier"] {
+    --fond: #f4efe8; --carte: #fffdfa; --texte: #241a1d; --gris: #6b5f62; --muted: #8b8480;
+    --bord: #e9e1d7; --survol: #f6ede9; --doux: #f8f3ed;
+    --accent: #7b1e34; --bordeaux: #7b1e34; --bordeaux-clair: #932a43; --entete: #241016; --or: #c8a45c;
+    --ombre: 0 1px 2px rgba(36,16,22,.06), 0 6px 20px rgba(36,16,22,.06);
+    --largeur-menu: 236px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root[data-design="sommelier"]:where(:not([data-theme="light"])) {
+      --fond: #110d0e; --carte: #1b1718; --texte: #f2ece6; --gris: #c4b9b2; --bord: #2e2729; --survol: #2a2023; --doux: #221d1e;
+      --accent: #e0a3b2; --bordeaux: #8e2a43; --bordeaux-clair: #a3354f; --entete: #0b0708; --ombre: none;
+    }
+  }
+  :root[data-design="sommelier"][data-theme="dark"] {
+    --fond: #110d0e; --carte: #1b1718; --texte: #f2ece6; --gris: #c4b9b2; --bord: #2e2729; --survol: #2a2023; --doux: #221d1e;
+    --accent: #e0a3b2; --bordeaux: #8e2a43; --bordeaux-clair: #a3354f; --entete: #0b0708; --ombre: none;
+  }
+
+  /* Agencement : menu latéral sombre à gauche, contenu à droite */
+  [data-design="sommelier"] body {
+    display: grid; grid-template-columns: var(--largeur-menu) minmax(0, 1fr); grid-template-rows: auto 1fr; min-height: 100vh;
+    background: linear-gradient(90deg, var(--entete) var(--largeur-menu), var(--fond) var(--largeur-menu));
+  }
+  [data-design="sommelier"] header {
+    grid-column: 1; grid-row: 1; background: transparent; flex-direction: column; align-items: stretch;
+    justify-content: flex-start; gap: 20px; padding: 28px 20px 12px;
+  }
+  [data-design="sommelier"] header h1 { font-size: 1.3rem; letter-spacing: .01em; }
+  [data-design="sommelier"] header h1::after {
+    content: "Livre de cave"; display: block; margin-top: 6px; font-size: .66rem; font-weight: 600;
+    letter-spacing: .2em; text-transform: uppercase; color: var(--or);
+  }
+  [data-design="sommelier"] .stats { flex-direction: row; flex-wrap: wrap; gap: 0 8px; }
+  [data-design="sommelier"] .stat {
+    flex-basis: 100%; display: flex; justify-content: space-between; align-items: baseline; text-align: left;
+    padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  [data-design="sommelier"] .stat .l { order: 1; font-size: .66rem; opacity: .6; }
+  [data-design="sommelier"] .stat .v { order: 2; font-size: 1rem; font-weight: 600; }
+  [data-design="sommelier"] .btn-theme { margin-top: 12px; border-radius: 8px; background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); }
+  @media (min-width: 901px) {
+    [data-design="sommelier"] #btn-theme {
+      position: fixed; left: 16px; bottom: 18px; z-index: 4; width: calc(var(--largeur-menu) - 32px); margin: 0;
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px;
+      font-size: .88rem; color: rgba(255,255,255,.78); text-align: left;
+    }
+    [data-design="sommelier"] #btn-theme:hover { color: #fff; background: rgba(255,255,255,.1); }
+    /* le menu ne passe pas sous le bouton */
+    [data-design="sommelier"] nav.onglets { padding-bottom: 90px; }
+  }
+  @media (max-width: 900px) { #btn-theme .libelle { display: none; } }
+
+  [data-design="sommelier"] nav.onglets {
+    grid-column: 1; grid-row: 2; align-self: start; position: sticky; top: 0;
+    flex-direction: column; gap: 2px; padding: 8px 12px 28px; background: transparent; overflow: visible;
+  }
+  [data-design="sommelier"] nav.onglets button {
+    position: relative; text-align: left; border-radius: 10px; padding: 11px 14px; font-size: .92rem; color: rgba(255,255,255,.68);
+  }
+  [data-design="sommelier"] nav.onglets button:hover { background: rgba(255,255,255,.06); color: #fff; }
+  [data-design="sommelier"] nav.onglets button.actif { background: rgba(255,255,255,.09); color: #fff; font-weight: 600; }
+  [data-design="sommelier"] nav.onglets button.actif::before {
+    content: ""; position: absolute; left: -12px; top: 9px; bottom: 9px; width: 3px; border-radius: 0 3px 3px 0; background: var(--or);
+  }
+
+  [data-design="sommelier"] main { grid-column: 2; grid-row: 1 / span 2; width: 100%; max-width: 1380px; margin: 0; padding: 0 36px 56px; }
+  /* Barre de recherche collée en haut pendant le défilement */
+  [data-design="sommelier"] main > .barre:first-child {
+    position: sticky; top: 0; z-index: 5; margin: 0 -36px 22px; padding: 18px 36px 14px;
+    background: color-mix(in srgb, var(--fond) 92%, transparent); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--bord);
+  }
+
+  /* Champs et boutons */
+  [data-design="sommelier"] .barre input, [data-design="sommelier"] .barre select,
+  [data-design="sommelier"] form input, [data-design="sommelier"] form select, [data-design="sommelier"] form textarea {
+    border-radius: 10px; border-color: var(--bord); background: var(--carte);
+  }
+  [data-design="sommelier"] input:focus, [data-design="sommelier"] select:focus, [data-design="sommelier"] textarea:focus {
+    outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 1px; border-color: var(--accent);
+  }
+  [data-design="sommelier"] button { border-radius: 10px; }
+  [data-design="sommelier"] button.sec { background: transparent; color: var(--texte); border-color: var(--bord); }
+  [data-design="sommelier"] button.sec:hover { background: var(--survol); border-color: var(--accent); }
+
+  /* Cartes : sans bordure, ombre douce */
+  [data-design="sommelier"] :is(.tuile, .graph, .tableau-wrap, .carte-svg, .hist) {
+    border-color: transparent; border-radius: 16px; box-shadow: var(--ombre);
+  }
+  [data-design="sommelier"][data-theme="dark"] :is(.tuile, .graph, .tableau-wrap, .carte-svg, .hist) { border-color: var(--bord); }
+  @media (prefers-color-scheme: dark) {
+    [data-design="sommelier"]:where(:not([data-theme="light"])) :is(.tuile, .graph, .tableau-wrap, .carte-svg, .hist) { border-color: var(--bord); }
+  }
+  [data-design="sommelier"] .graph { padding: 20px 22px; }
+  [data-design="sommelier"] .graph h3 { font-size: .98rem; }
+  [data-design="sommelier"] .db-haut, [data-design="sommelier"] .db-grille { gap: 18px; }
+  [data-design="sommelier"] .tuile { padding: 18px 20px; }
+  [data-design="sommelier"] .tuile .l { font-size: .74rem; text-transform: uppercase; letter-spacing: .06em; }
+  [data-design="sommelier"] .tuile.hero { background: linear-gradient(135deg, #4a1121, #7b1e34); color: #fff; }
+  [data-design="sommelier"] .tuile.hero .l, [data-design="sommelier"] .tuile.hero .d { color: rgba(255,255,255,.78); }
+  [data-design="sommelier"] .tuile.cliquable:hover, [data-design="sommelier"] .hist:hover { box-shadow: 0 0 0 1.5px var(--accent), var(--ombre); }
+
+  /* Tableau des lignes */
+  [data-design="sommelier"] .tableau-wrap { max-height: calc(100vh - 200px); }
+  /* Vue Lignes : le tableau prend toute la largeur ; sa hauteur est ajustée en JS jusqu'au bas de la fenêtre */
+  main:has(#vue-lignes.active) { max-width: none; padding-bottom: 12px; }
+  [data-design="sommelier"] main:has(#vue-lignes.active) { max-width: none; padding: 0 14px 12px; }
+  [data-design="sommelier"] main:has(#vue-lignes.active) > .barre:first-child { margin-left: -14px; margin-right: -14px; padding-left: 14px; padding-right: 14px; }
+  [data-design="sommelier"] table.lignes th { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; padding: 12px 10px; }
+  [data-design="sommelier"] table.lignes td { padding: 10px; }
+  [data-design="sommelier"] .vignette { width: 36px; height: 36px; border-radius: 8px; }
+
+  /* Fenêtres */
+  [data-design="sommelier"] .fond-modale { background: rgba(20,8,12,.6); backdrop-filter: blur(3px); }
+  [data-design="sommelier"] .modale { border-radius: 20px; padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+  [data-design="sommelier"] .modale h2 { color: var(--texte); font-size: 1.4rem; }
+  [data-design="sommelier"] .detail-tete .grande-photo { border-radius: 14px; }
+  [data-design="sommelier"] .sortie { border-left-color: var(--or); }
+
+  /* Écrans étroits : le menu repasse en haut, en bandeau horizontal */
+  @media (max-width: 900px) {
+    [data-design="sommelier"] body { display: block; background: var(--fond); }
+    [data-design="sommelier"] header { flex-direction: row; align-items: center; justify-content: space-between; background: var(--entete); padding: 14px; }
+    [data-design="sommelier"] header h1::after { display: none; }
+    [data-design="sommelier"] .stats { flex-wrap: nowrap; gap: 14px; }
+    [data-design="sommelier"] .stat { flex-basis: auto; flex-direction: column; border: none; padding: 0; }
+    [data-design="sommelier"] .btn-theme { margin-top: 0; }
+    [data-design="sommelier"] nav.onglets { flex-direction: row; overflow-x: auto; background: var(--entete); z-index: 6; padding: 4px 10px 8px; }
+    [data-design="sommelier"] nav.onglets button { white-space: nowrap; }
+    [data-design="sommelier"] nav.onglets button.actif::before { left: 14px; right: 14px; top: auto; bottom: 2px; width: auto; height: 2px; border-radius: 2px; }
+    [data-design="sommelier"] main { padding: 0 14px 40px; }
+    [data-design="sommelier"] main > .barre:first-child { margin: 0 -14px 4px; padding: 12px 14px; top: 46px; }
+  }
+  /* Téléphone : la barre de filtres défile avec la page (elle prendrait un tiers de l'écran) */
+  @media (max-width: 600px) {
+    [data-design="sommelier"] main > .barre:first-child { position: static; backdrop-filter: none; background: transparent; border-bottom: none; margin-bottom: 8px; }
+    .barre input[type=search] { flex-basis: 100%; }
+    .barre select { flex: 1 1 40%; min-width: 0; }
+    #btn-ajouter { margin-left: auto; }
+    /* En-tête : titre et boutons sur une ligne, totaux en dessous sur toute la largeur */
+    :root header { flex-wrap: wrap; row-gap: 10px; }
+    :root header .stats { flex: 1 1 100%; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
+    :root header .stat .v { font-size: 1.05rem; }
+    :root header .btn-theme { padding: 5px 9px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🍷 Ma Cave</h1>
+  <div class="stats">
+    <div class="stat"><div class="v" id="st-refs">0</div><div class="l">Références</div></div>
+    <div class="stat"><div class="v" id="st-bouteilles">0</div><div class="l">Bouteilles</div></div>
+    <div class="stat"><div class="v" id="st-valeur">0 €</div><div class="l">Valeur totale</div></div>
+    <button class="btn-theme" id="btn-theme" title="Changer de thème (clair / sombre)">🌙 <span class="libelle">Mode sombre</span></button>
+  </div>
+</header>
+<nav class="onglets" id="onglets">
+  <button data-vue="dashboard">📊 Tableau de bord</button>
+  <button data-vue="lignes">☰ Lignes</button>
+  <button data-vue="carte">🗺️ Carte des vins</button>
+  <button data-vue="historique"><svg class="ico-bouteille" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.7 1.6h2.6v5.6c0 .9.4 1.5 1.2 2.1 1 .8 1.5 1.8 1.5 3.1v8.4c0 .8-.6 1.4-1.4 1.4H9.4c-.8 0-1.4-.6-1.4-1.4v-8.4c0-1.3.5-2.3 1.5-3.1.8-.6 1.2-1.2 1.2-2.1z" fill="#a3354f"/><path d="M10.7 1.6h2.6v3h-2.6z" fill="#c8a45c"/><rect x="8" y="13.6" width="8" height="4.6" rx=".5" fill="#f2e6c9"/><path d="M9.6 11.6v1.2" stroke="#fff" stroke-opacity=".45" stroke-width=".9" stroke-linecap="round"/></svg> Sorties</button>
+</nav>
+
+<main>
+  <div class="barre">
+    <input type="search" id="recherche" placeholder="Rechercher (nom, appellation, région, position, n°, commentaires…)">
+    <select id="f-couleur"><option value="">Toutes couleurs</option></select>
+    <select id="f-region"><option value="">Toutes régions</option></select>
+    <select id="f-tri" hidden>
+      <option value="nom">Tri : nom</option>
+      <option value="millesime">Tri : millésime</option>
+      <option value="apogee">Tri : apogée</option>
+      <option value="valeur">Tri : valeur</option>
+      <option value="stock">Tri : stock</option>
+      <option value="prix">Tri : prix</option>
+      <option value="region">Tri : région</option>
+      <option value="position">Tri : position</option>
+    </select>
+    <label class="chk"><input type="checkbox" id="f-bas"> Stock bas</label>
+    <label class="chk" id="lbl-epuises"><input type="checkbox" id="f-epuises"> Afficher épuisés</label>
+    <button class="lien" id="btn-reset" hidden>✕ Réinitialiser les filtres</button>
+    <button id="btn-ajouter">+ Ajouter un vin</button>
+  </div>
+
+  <section class="vue" id="vue-dashboard"></section>
+  <section class="vue" id="vue-lignes"><div class="tableau-wrap" id="lignes"></div></section>
+  <section class="vue" id="vue-carte"></section>
+  <section class="vue" id="vue-historique"></section>
+</main>
+
+<div id="tip" role="tooltip"></div>
+
+<!-- Visionneuse photo -->
+<div id="visionneuse" role="dialog" aria-label="Photo agrandie">
+  <button class="fermer" aria-label="Fermer">&times;</button>
+  <img alt="">
+  <div class="legende-photo"></div>
+</div>
+
+<!-- Formulaire vin -->
+<div class="fond-modale" id="m-form">
+  <div class="modale modale-form">
+    <button class="fermer" data-fermer>&times;</button>
+    <h2 id="form-titre" class="visuellement-cache">Ajouter un vin</h2>
+    <form id="form-vin">
+      <div class="form-grille">
+        <!-- Colonne de gauche : photo et couleur -->
+        <aside class="form-cote">
+          <label class="zone-photo" id="zone-photo" title="Choisir une photo">
+            <span class="apercu-photo" id="apercu-photo"></span>
+            <span class="zone-photo-vide">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l2-2.5h6L17 7h3v12H4z"/><circle cx="12" cy="13" r="3.6"/></svg>
+              <b>Ajouter une photo</b>
+              <small>cliquer ou glisser une image</small>
+            </span>
+            <span class="zone-photo-changer">Changer la photo</span>
+            <input type="file" accept="image/*" id="input-photo">
+          </label>
+          <button type="button" class="lien" id="btn-retirer-photo">Retirer la photo</button>
+
+          <div class="form-champ">
+            <span class="form-libelle">Couleur</span>
+            <div class="choix-couleur">
+              <label><input type="radio" name="couleur" value="Rouge" checked><span><i style="background:var(--c-rouge)"></i>Rouge</span></label>
+              <label><input type="radio" name="couleur" value="Blanc"><span><i style="background:var(--c-blanc)"></i>Blanc</span></label>
+              <label><input type="radio" name="couleur" value="Rosé"><span><i style="background:var(--c-rose)"></i>Rosé</span></label>
+              <label><input type="radio" name="couleur" value="Bulles"><span><i style="background:var(--c-bulles)"></i>Bulles</span></label>
+              <label><input type="radio" name="couleur" value="Liquoreux"><span><i style="background:var(--c-liquoreux)"></i>Liquoreux</span></label>
+              <label><input type="radio" name="couleur" value="Autre"><span><i style="background:var(--c-autre)"></i>Autre</span></label>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit">Enregistrer</button>
+            <button type="button" class="sec" data-fermer>Annuler</button>
+          </div>
+        </aside>
+
+        <!-- Colonne de droite : les informations par thème -->
+        <div class="form-sections">
+          <fieldset class="section-vin">
+            <legend>Le vin</legend>
+            <div class="champs">
+              <label class="plein">Nom du vin *<input name="nom" required class="champ-nom" placeholder="ex. Château Tour la Vérité"></label>
+              <label>Appellation<input name="appellation" list="l-appellations" placeholder="ex. Saint-Émilion"></label>
+              <label>Région<input name="region" list="l-regions" placeholder="ex. Bordeaux"></label>
+              <label>Millésime<input name="millesime" type="number" min="1900" max="2100" placeholder="ex. 2018"></label>
+              <label>Degré<span class="avec-unite"><input name="degre" type="number" min="0" max="25" step="0.1" placeholder="13,5"><i>% vol.</i></span></label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Achat</legend>
+            <div class="champs">
+              <label>Prix d'achat<span class="avec-unite"><input name="prix" type="number" min="0" step="0.01" placeholder="0,00"><i>€ / btl</i></span></label>
+              <label>Quantité achetée<span class="avec-unite"><input name="quantite" type="number" min="0" step="1" value="6"><i>btl</i></span></label>
+              <label>Date d'achat<input name="dateAchat" placeholder="année ou jj/mm/aaaa"></label>
+              <label>Lieu d'achat<input name="lieuAchat" list="l-lieux" placeholder="ex. Caviste, salon…"></label>
+            </div>
+          </fieldset>
+
+          <div class="form-duo">
+          <fieldset>
+            <legend>Garde &amp; rangement</legend>
+            <div class="champs">
+              <label>Apogée<input name="apogee" type="number" min="1900" max="2150" placeholder="ex. 2028"><small class="aide">Année où il sera à son meilleur</small></label>
+              <label>Position dans la cave<input name="position" placeholder="ex. B3"><small class="aide">Casier, rangée…</small></label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Stock</legend>
+            <div class="champs">
+              <label>Stock actuel<span class="avec-unite"><input name="stock" type="number" min="0" step="1" placeholder="= quantité"><i>btl</i></span><small class="aide">Vide = quantité achetée</small></label>
+              <label>Seuil d'alerte<span class="avec-unite"><input name="seuil" type="number" min="0" step="1" value="3"><i>btl</i></span><small class="aide">Alerte « stock bas »</small></label>
+            </div>
+          </fieldset>
+
+          </div>
+
+          <fieldset class="form-notes">
+            <legend>Notes</legend>
+            <textarea name="notes" placeholder="Cépages, accords, souvenirs d'achat, occasion à laquelle l'ouvrir…"></textarea>
+          </fieldset>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Détail vin -->
+<div class="fond-modale" id="m-detail">
+  <div class="modale">
+    <button class="fermer" data-fermer>&times;</button>
+    <div id="detail-contenu"></div>
+  </div>
+</div>
+
+<!-- Sortie de bouteille -->
+<div class="fond-modale" id="m-sortie">
+  <div class="modale" style="max-width:480px">
+    <button class="fermer" data-fermer>&times;</button>
+    <h2>Sortir une bouteille</h2>
+    <form id="form-sortie">
+      <div class="champs">
+        <label>Date<input name="date" type="date" required></label>
+        <label>Nombre<input name="nombre" type="number" min="1" step="1" value="1" required></label>
+        <label class="plein">Appréciation
+          <span class="choix-etoiles" id="choix-etoiles">
+            <span data-n="1">★</span><span data-n="2">★</span><span data-n="3">★</span><span data-n="4">★</span><span data-n="5">★</span>
+          </span>
+        </label>
+        <label class="plein">Commentaire<textarea name="commentaire" placeholder="Occasion, accord, impressions de dégustation…"></textarea></label>
+      </div>
+      <div class="actions">
+        <button type="button" class="sec" data-fermer>Annuler</button>
+        <button type="submit">Valider la sortie</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Confirmation / message -->
+<div class="fond-modale" id="m-confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirm-titre" aria-describedby="confirm-message">
+  <div class="modale modale-confirm">
+    <div class="confirm-icone" id="confirm-icone"></div>
+    <h2 id="confirm-titre"></h2>
+    <p id="confirm-message"></p>
+    <div class="actions">
+      <button type="button" class="sec" id="confirm-non" data-fermer>Annuler</button>
+      <button type="button" id="confirm-oui">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<datalist id="l-appellations"></datalist>
+<datalist id="l-regions"></datalist>
+<datalist id="l-lieux"></datalist>
+
+<script src="donnees-initiales.js" onerror="void 0"></script>
+<script src="carte-france.js" onerror="void 0"></script>
+<script>
+// ---------- Stockage (IndexedDB, pour supporter les photos) ----------
+const DB_NOM = 'ma-cave', STORE = 'vins';
+let db;
+function ouvrirDB() {
+  return new Promise((ok, ko) => {
+    const req = indexedDB.open(DB_NOM, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(STORE, { keyPath: 'id' });
+    req.onsuccess = () => { db = req.result; ok(); };
+    req.onerror = () => ko(req.error);
+  });
+}
+function tx(mode, fn) {
+  return new Promise((ok, ko) => {
+    const t = db.transaction(STORE, mode);
+    const r = fn(t.objectStore(STORE));
+    t.oncomplete = () => ok(r && r.result);
+    t.onerror = () => ko(t.error);
+  });
+}
+const toutLire = () => tx('readonly', s => s.getAll());
+const sauver = vin => tx('readwrite', s => s.put(vin));
+const supprimer = id => tx('readwrite', s => s.delete(id));
+
+// ---------- Utilitaires ----------
+// Couleurs des vins : palette vérifiée (daltonisme + contraste), en clair et en sombre via les variables CSS
+const ORDRE_COULEURS = ['Rouge', 'Rosé', 'Blanc', 'Bulles', 'Liquoreux', 'Autre'];
+const VAR_COULEUR = { Rouge: '--c-rouge', 'Rosé': '--c-rose', Blanc: '--c-blanc', Bulles: '--c-bulles', Liquoreux: '--c-liquoreux', Autre: '--c-autre' };
+const couleurVin = c => `var(${VAR_COULEUR[c] || '--c-autre'})`;
+const euro = n => (Number(n) || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+const euro0 = n => (Number(n) || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+const nb = n => (Number(n) || 0).toLocaleString('fr-FR');
+const pct = (a, b) => b ? Math.round(a / b * 100) + ' %' : '—';
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const dateFr = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('fr-FR') : '';
+const aujourdhui = () => new Date().toISOString().slice(0, 10);
+const ANNEE = new Date().getFullYear();
+const etoiles = n => '★'.repeat(n || 0) + '☆'.repeat(5 - (n || 0));
+const stockDe = v => Number(v.stock) || 0;
+const valeur = v => stockDe(v) * (Number(v.prix) || 0);
+const $ = s => document.querySelector(s);
+const pluriel = (n, mot) => `${nb(n)} ${mot}${Math.abs(n) > 1 ? 's' : ''}`;
+
+function etatApogee(v) {
+  const a = Number(v.apogee);
+  if (!a) return { cle: 'inconnu', cls: 'b-inconnu', txt: 'Apogée ?' };
+  if (ANNEE < a) return { cle: 'jeune', cls: 'b-jeune', txt: 'À garder' };
+  if (ANNEE === a) return { cle: 'apogee', cls: 'b-apogee', txt: "À l'apogée" };
+  return { cle: 'passe', cls: 'b-passe', txt: 'Apogée passée' };
+}
+const stockBas = v => stockDe(v) > 0 && v.seuil !== '' && v.seuil != null && stockDe(v) <= Number(v.seuil);
+// Date d'achat : texte libre (année seule ou date). Les dates ISO sont affichées à la française.
+const dateAchatFr = d => /^\d{4}-\d{2}-\d{2}$/.test(d || '') ? dateFr(d) : (d || '');
+
+// Réduit une image à 1000 px max pour ne pas alourdir la base
+function lireImage(fichier) {
+  return new Promise((ok, ko) => {
+    const lecteur = new FileReader();
+    lecteur.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 1000, r = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        ok(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = ko;
+      img.src = lecteur.result;
+    };
+    lecteur.onerror = ko;
+    lecteur.readAsDataURL(fichier);
+  });
+}
+
+// ---------- État ----------
+let vins = [];
+let enEdition = null;      // vin en cours d'édition (ou null pour ajout)
+let photoTemp = null;      // photo du formulaire
+let vinCourant = null;     // vin affiché dans le détail
+let noteSortie = 0;
+let vue = localStorage.getItem('vue') || 'dashboard';
+let triDesc = false;       // sens du tri (vue lignes : clic sur l'en-tête)
+
+async function recharger() {
+  vins = await toutLire();
+  afficher();
+}
+
+// ---------- Filtres & tri ----------
+function remplirSelect(sel, valeurs, libelleTous) {
+  const actuel = sel.value;
+  sel.innerHTML = `<option value="">${libelleTous}</option>` + valeurs.map(v => `<option>${esc(v)}</option>`).join('');
+  sel.value = valeurs.includes(actuel) ? actuel : '';
+}
+function remplirDatalist(id, valeurs) {
+  $(id).innerHTML = valeurs.map(v => `<option value="${esc(v)}">`).join('');
+}
+const uniques = cle => [...new Set(vins.map(v => v[cle]).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'fr'));
+
+// Filtres communs à toutes les vues (sauf « épuisés », propre aux listes)
+function filtrer({ avecEpuises, sansRecherche = false }) {
+  const q = sansRecherche ? '' : requete();
+  const fc = $('#f-couleur').value, fr = $('#f-region').value;
+  const bas = $('#f-bas').checked;
+  return vins.filter(v =>
+    (avecEpuises || stockDe(v) > 0) &&
+    (!bas || stockBas(v)) &&
+    (!fc || v.couleur === fc) &&
+    (!fr || v.region === fr) &&
+    (!q || [v.nom, v.appellation, v.region, v.position, v.lieuAchat, v.millesime, v.couleur,
+      v.notes, ...(v.sorties || []).map(s => s.commentaire)]
+      .some(x => normaliser(x).includes(q)))
+  );
+}
+// Minuscules et sans accents : « eleve » trouve « élevé »
+const normaliser = x => String(x ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const requete = () => normaliser($('#recherche').value.trim());
+
+// Positions (dans le texte d'origine) des passages qui correspondent à la recherche, sans tenir compte des accents
+function correspondances(texte, q) {
+  const t = String(texte ?? ''), norm = [], origine = [];
+  for (let i = 0; i < t.length; i++) for (const c of normaliser(t[i])) { norm.push(c); origine.push(i); }
+  const n = norm.join(''), res = [];
+  if (!q) return res;
+  for (let k = n.indexOf(q); k !== -1; k = n.indexOf(q, k + q.length)) res.push([origine[k], origine[k + q.length - 1] + 1]);
+  return res;
+}
+// Échappe le texte et entoure les passages trouvés de <mark>
+function hl(texte, q = requete()) {
+  const t = String(texte ?? '');
+  let out = '', pos = 0;
+  for (const [a, b] of correspondances(t, q)) { out += esc(t.slice(pos, a)) + '<mark>' + esc(t.slice(a, b)) + '</mark>'; pos = b; }
+  return out + esc(t.slice(pos));
+}
+// Si la recherche ne correspond qu'à une note ou un commentaire (invisibles dans les listes), on en montre un extrait
+function extrait(v, q = requete()) {
+  if (!q) return '';
+  const visibles = [v.nom, v.appellation, v.region, v.position, v.millesime, v.couleur];
+  if (visibles.some(x => normaliser(x).includes(q))) return '';
+  const sources = [['🛒 Acheté chez ', v.lieuAchat], ['📝 ', v.notes],
+    ...[...(v.sorties || [])].sort((a, b) => (b.date || '').localeCompare(a.date || '')).map(s => [`💬 ${dateFr(s.date)} : `, s.commentaire])];
+  for (const [prefixe, src] of sources) {
+    const m = correspondances(src, q)[0];
+    if (!m) continue;
+    const t = String(src), debut = Math.max(0, m[0] - 40), fin = Math.min(t.length, m[1] + 40);
+    return `<div class="extrait">${prefixe}${debut > 0 ? '…' : ''}${hl(t.slice(debut, fin), q)}${fin < t.length ? '…' : ''}</div>`;
+  }
+  return '';
+}
+const vide9 = x => (x === '' || x == null) ? null : Number(x);
+function comparer(cle) {
+  const txt = k => (a, b) => (a[k] || '').localeCompare(b[k] || '', 'fr', { numeric: true });
+  // Les valeurs manquantes vont toujours à la fin, quel que soit le sens
+  const n = f => (a, b) => {
+    const x = f(a), y = f(b);
+    if (x == null && y == null) return 0;
+    if (x == null) return triDesc ? -1 : 1;
+    if (y == null) return triDesc ? 1 : -1;
+    return x - y;
+  };
+  return {
+    nom: txt('nom'), region: txt('region'), position: txt('position'),
+    appellation: txt('appellation'), couleur: (a, b) => ORDRE_COULEURS.indexOf(a.couleur) - ORDRE_COULEURS.indexOf(b.couleur),
+    millesime: n(v => vide9(v.millesime)), apogee: n(v => vide9(v.apogee)), prix: n(v => vide9(v.prix)),
+    valeur: n(valeur), stock: n(stockDe),
+  }[cle] || txt('nom');
+}
+function trier(liste) {
+  const cmp = comparer($('#f-tri').value);
+  return liste.sort((a, b) => triDesc ? -cmp(a, b) : cmp(a, b));
+}
+
+function filtresActifs() {
+  return $('#recherche').value || $('#f-couleur').value || $('#f-region').value || $('#f-bas').checked;
+}
+
+// ---------- Affichage principal ----------
+function afficher() {
+  // Statistiques globales (toute la cave)
+  $('#st-refs').textContent = nb(vins.filter(v => stockDe(v) > 0).length);
+  $('#st-bouteilles').textContent = nb(vins.reduce((s, v) => s + stockDe(v), 0));
+  $('#st-valeur').textContent = euro(vins.reduce((s, v) => s + valeur(v), 0));
+
+  remplirSelect($('#f-couleur'), ORDRE_COULEURS.filter(c => vins.some(v => v.couleur === c)).concat(uniques('couleur').filter(c => !ORDRE_COULEURS.includes(c))), 'Toutes couleurs');
+  remplirSelect($('#f-region'), uniques('region'), 'Toutes régions');
+  remplirDatalist('#l-appellations', uniques('appellation'));
+  remplirDatalist('#l-regions', uniques('region'));
+  remplirDatalist('#l-lieux', uniques('lieuAchat'));
+
+  $('#btn-reset').hidden = !filtresActifs();
+  document.querySelectorAll('#onglets button').forEach(b => b.classList.toggle('actif', b.dataset.vue === vue));
+  document.querySelectorAll('.vue').forEach(s => s.classList.toggle('active', s.id === 'vue-' + vue));
+  const liste = vue === 'lignes';
+  $('#lbl-epuises').hidden = !liste;
+  cacherTip();
+
+  ({ dashboard: afficherDashboard, lignes: afficherLignes, carte: afficherCarte, historique: afficherHistorique })[vue]();
+  synchroniserListes();
+}
+
+const messageVide = () => vins.length
+  ? 'Aucun vin ne correspond aux filtres.'
+  : 'Votre cave est vide. Cliquez sur « + Ajouter un vin » pour commencer.';
+
+// ---------- Vue lignes ----------
+const COLONNES = [
+  { cle: 'nom', titre: 'Nom' },
+  { cle: 'millesime', titre: 'Millésime', num: true },
+  { cle: 'couleur', titre: 'Couleur' },
+  { cle: 'appellation', titre: 'Appellation' },
+  { cle: 'region', titre: 'Région' },
+  { cle: 'apogee', titre: 'Apogée' },
+  { cle: 'position', titre: 'Position' },
+  { cle: 'stock', titre: 'Stock', num: true },
+  { cle: 'prix', titre: 'Prix', num: true },
+  { cle: 'valeur', titre: 'Valeur', num: true },
+];
+function afficherLignes() {
+  const liste = trier(filtrer({ avecEpuises: $('#f-epuises').checked }));
+  const cle = $('#f-tri').value;
+  if (!liste.length) { $('#lignes').innerHTML = `<div class="vide">${messageVide()}</div>`; return; }
+  const totBtl = liste.reduce((s, v) => s + stockDe(v), 0), totVal = liste.reduce((s, v) => s + valeur(v), 0);
+  $('#lignes').innerHTML = `<table class="lignes">
+    <thead><tr><th></th>${COLONNES.map(c => `<th data-tri="${c.cle}" class="${c.num ? 'num' : ''}">${c.titre}${c.cle === cle ? ` <span class="fleche">${triDesc ? '▼' : '▲'}</span>` : ''}</th>`).join('')}</tr></thead>
+    <tbody>${liste.map(v => {
+      const a = etatApogee(v);
+      return `<tr data-id="${v.id}" class="${stockDe(v) > 0 ? '' : 'epuise'}">
+        <td><span class="vignette ${v.photo ? 'photo-ok' : ''}" style="${v.photo ? `background-image:url(${v.photo})` : ''}" ${v.photo ? 'title="Agrandir la photo"' : ''}></span></td>
+        <td><b>${hl(v.nom)}</b>${extrait(v)}</td>
+        <td class="num">${hl(v.millesime)}</td>
+        <td style="white-space:nowrap"><span class="pastille" style="background:${couleurVin(v.couleur)}"></span>${hl(v.couleur)}</td>
+        <td>${hl(v.appellation)}</td>
+        <td>${hl(v.region)}</td>
+        <td style="white-space:nowrap">${v.apogee ? esc(v.apogee) + ' ' : ''}<span class="badge ${a.cls}">${a.txt}</span></td>
+        <td>${hl(v.position)}</td>
+        <td class="num"><b>${stockDe(v)}</b>${stockBas(v) ? ' <span class="badge b-bas">bas</span>' : ''}</td>
+        <td class="num">${v.prix !== '' && v.prix != null ? euro(v.prix) : '—'}</td>
+        <td class="num">${euro(valeur(v))}</td>
+      </tr>`;
+    }).join('')}</tbody>
+    <tfoot><tr><td></td><td colspan="7">${pluriel(liste.length, 'vin')}</td><td class="num">${nb(totBtl)}</td><td></td><td class="num">${euro(totVal)}</td></tr></tfoot>
+  </table>`;
+  ajusterHauteurLignes();
+}
+// Le tableau descend jusqu'en bas de la fenêtre (défilement interne, en-tête et totaux restent visibles).
+// Sur téléphone, c'est la page entière qui défile.
+function ajusterHauteurLignes() {
+  const w = $('#lignes');
+  if (vue !== 'lignes' || !w) return;
+  if (innerWidth <= 600) { w.style.maxHeight = 'none'; return; }
+  const haut = w.getBoundingClientRect().top + scrollY;
+  w.style.maxHeight = Math.max(260, innerHeight - haut - 12) + 'px';
+}
+addEventListener('resize', ajusterHauteurLignes);
+
+$('#lignes').addEventListener('click', e => {
+  const vig = e.target.closest('.vignette.photo-ok');
+  if (vig) { agrandirPhoto(vig.closest('tr[data-id]').dataset.id); return; }
+  const th = e.target.closest('th[data-tri]');
+  if (th) {
+    if ($('#f-tri').value === th.dataset.tri) triDesc = !triDesc;
+    else { $('#f-tri').value = th.dataset.tri; triDesc = ['valeur', 'stock', 'prix'].includes(th.dataset.tri); }
+    afficher();
+    return;
+  }
+  const tr = e.target.closest('tr[data-id]');
+  if (tr) afficherDetail(tr.dataset.id);
+});
+
+// ---------- Graphiques (SVG, sans bibliothèque) ----------
+const W = 520;
+function ticks(max, n = 4) {
+  if (max <= 0) return [0, 1];
+  const brut = max / n, p = 10 ** Math.floor(Math.log10(brut));
+  let pas = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= brut);
+  pas = Math.max(1, pas);
+  const haut = Math.ceil(max / pas) * pas, t = [];
+  for (let v = 0; v <= haut + 1e-9; v += pas) t.push(Math.round(v * 100) / 100);
+  return t;
+}
+const compact = v => v >= 1000 ? (v / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' k' : nb(v);
+// Barre arrondie (4 px) côté valeur, carrée côté base
+function barreH(x, y, w, h, r = 4) {
+  if (w <= 0) return '';
+  r = Math.min(r, w, h / 2);
+  return `M${x},${y}h${w - r}a${r},${r} 0 0 1 ${r},${r}v${h - 2 * r}a${r},${r} 0 0 1 ${-r},${r}h${-(w - r)}z`;
+}
+function barreV(x, yBase, w, h, r = 4) {
+  if (h <= 0) return '';
+  r = Math.min(r, h, w / 2);
+  return `M${x},${yBase}v${-(h - r)}a${r},${r} 0 0 1 ${r},${-r}h${w - 2 * r}a${r},${r} 0 0 1 ${r},${r}v${h - r}z`;
+}
+const coupe = (s, n) => s.length > n ? s.slice(0, n - 1) + '…' : s;
+const attrTip = t => `data-tip="${esc(t)}" tabindex="0"`;
+
+// Barres horizontales : items [{ label, value, tip, action }]
+function grapheBarresH(items, { fmt = nb } = {}) {
+  if (!items.length) return '<div class="vide-g">Aucune donnée</div>';
+  const lg = 130, droite = 76, rh = 30, ep = 16, H = items.length * rh;
+  const max = Math.max(...items.map(i => i.value), 1), plot = W - lg - droite;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img">
+    <line class="axe-l" x1="${lg}" x2="${lg}" y1="0" y2="${H}"/>
+    ${items.map((it, i) => {
+      const y = i * rh, w = Math.max(it.value > 0 ? 2 : 0, it.value / max * plot);
+      return `<g class="m">
+        <text class="t-lab" x="${lg - 10}" y="${y + rh / 2}" text-anchor="end" dominant-baseline="central">${esc(coupe(it.label, 19))}</text>
+        <path class="barre-m" d="${barreH(lg, y + (rh - ep) / 2, w, ep)}" fill="${it.couleur || 'var(--s1)'}"/>
+        <text class="t-val" x="${lg + w + 6}" y="${y + rh / 2}" dominant-baseline="central">${esc(fmt(it.value))}</text>
+        <rect class="hit ${it.action ? 'clic' : ''}" x="0" y="${y}" width="${W}" height="${rh}" ${attrTip(it.tip)} ${it.action ? `data-action="${esc(it.action)}"` : ''}/>
+      </g>`;
+    }).join('')}
+  </svg>`;
+}
+
+// Colonnes : items [{ label, value, tip, couleur }]; etiquette = index de la colonne à étiqueter
+function grapheColonnes(items, { fmt = nb, etiquettes = [], marque = null } = {}) {
+  if (!items.length || items.every(i => !i.value)) return null;
+  const g = 34, haut = 18, bas = 24, Hp = 170, H = haut + Hp + bas;
+  const max = Math.max(...items.map(i => i.value), 1), tk = ticks(max), top = tk[tk.length - 1];
+  const plot = W - g - 4, slot = plot / items.length, bw = Math.min(24, slot * 0.7);
+  const yv = v => haut + Hp - v / top * Hp;
+  const pas = Math.ceil(items.length / Math.floor(plot / 38));
+  return `<svg viewBox="0 0 ${W} ${H}" role="img">
+    ${tk.map(t => `<line class="grille-l" x1="${g}" x2="${W}" y1="${yv(t)}" y2="${yv(t)}"/><text class="t-axe" x="${g - 6}" y="${yv(t)}" text-anchor="end" dominant-baseline="central">${compact(t)}</text>`).join('')}
+    ${marque != null ? `<line x1="${g + slot * (marque + .5)}" x2="${g + slot * (marque + .5)}" y1="${haut - 6}" y2="${haut + Hp}" stroke="var(--texte)" stroke-width="1" opacity=".35"/>` : ''}
+    ${items.map((it, i) => {
+      const x = g + slot * i, h = it.value / top * Hp;
+      return `<g class="m">
+        <path class="barre-m" d="${barreV(x + (slot - bw) / 2, haut + Hp, bw, Math.max(it.value > 0 ? 2 : 0, h))}" fill="${it.couleur || 'var(--s1)'}"/>
+        ${etiquettes.includes(i) && it.value ? `<text class="t-val" x="${x + slot / 2}" y="${yv(it.value) - 6}" text-anchor="middle">${esc(fmt(it.value))}</text>` : ''}
+        ${i % pas === 0 || i === marque ? `<text class="t-axe" x="${x + slot / 2}" y="${haut + Hp + 16}" text-anchor="middle">${esc(it.label)}</text>` : ''}
+        <rect class="hit" x="${x}" y="0" width="${slot}" height="${H}" ${attrTip(it.tip)}/>
+      </g>`;
+    }).join('')}
+    <line class="axe-l" x1="${g}" x2="${W}" y1="${haut + Hp}" y2="${haut + Hp}"/>
+  </svg>`;
+}
+
+// Barre empilée 100 % (répartition) : items [{ label, value, couleur, tip, action }]
+function grapheEmpile(items) {
+  const total = items.reduce((s, i) => s + i.value, 0);
+  if (!total) return '<div class="vide-g">Aucune donnée</div>';
+  const h = 26, gap = 2;
+  const visibles = items.filter(i => i.value > 0);
+  const dispo = W - gap * (visibles.length - 1);
+  let x = 0;
+  const segs = visibles.map(it => {
+    const w = it.value / total * dispo;
+    const s = `<g class="m"><rect class="barre-m" x="${x}" y="0" width="${w}" height="${h}" fill="${it.couleur}"/>
+      <rect class="hit ${it.action ? 'clic' : ''}" x="${x}" y="0" width="${w}" height="${h}" ${attrTip(it.tip)} ${it.action ? `data-action="${esc(it.action)}"` : ''}/></g>`;
+    x += w + gap;
+    return s;
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${h}" role="img"><defs><clipPath id="clip-emp"><rect width="${W}" height="${h}" rx="4"/></clipPath></defs><g clip-path="url(#clip-emp)">${segs}</g></svg>`;
+}
+
+function tableDonnees(entetes, lignes) {
+  return `<table class="donnees"><thead><tr>${entetes.map((h, i) => `<th class="${i ? 'num' : ''}">${h}</th>`).join('')}</tr></thead>
+    <tbody>${lignes.map(l => `<tr>${l.map((c, i) => `<td class="${i ? 'num' : ''}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+// Carte de graphique avec bascule graphique / tableau
+function carteGraph({ id, titre, sousTitre, graphe, legende = '', tableau, plein = false }) {
+  return `<div class="graph" ${plein ? 'style="grid-column:1/-1"' : ''} data-graph="${id}">
+    <div class="tete"><div><h3>${titre}</h3>${sousTitre ? `<div class="st">${sousTitre}</div>` : ''}</div>
+      ${tableau ? `<button class="lien" data-bascule="${id}">Tableau</button>` : ''}</div>
+    <div class="g-vue">${graphe}${legende}</div>
+    ${tableau ? `<div class="t-vue" hidden>${tableau}</div>` : ''}
+  </div>`;
+}
+
+// Regroupe et additionne
+function grouper(liste, cleFn, valFn) {
+  const m = new Map();
+  for (const v of liste) { const k = cleFn(v); m.set(k, (m.get(k) || 0) + valFn(v)); }
+  return m;
+}
+
+// ---------- Vue tableau de bord ----------
+function afficherDashboard() {
+  const base = filtrer({ avecEpuises: true });
+  const enCave = base.filter(v => stockDe(v) > 0);
+  const el = $('#vue-dashboard');
+  if (!enCave.length && !base.length) { el.innerHTML = `<div class="vide">${messageVide()}</div>`; return; }
+
+  const btl = enCave.reduce((s, v) => s + stockDe(v), 0);
+  const val = enCave.reduce((s, v) => s + valeur(v), 0);
+  const avecPrix = enCave.filter(v => Number(v.prix) > 0);
+  const btlPrix = avecPrix.reduce((s, v) => s + stockDe(v), 0);
+  const prixMoyen = btlPrix ? avecPrix.reduce((s, v) => s + valeur(v), 0) / btlPrix : 0;
+  const sansPrix = enCave.filter(v => !(Number(v.prix) > 0)).reduce((s, v) => s + stockDe(v), 0);
+  const btlEtat = cle => enCave.filter(v => etatApogee(v).cle === cle).reduce((s, v) => s + stockDe(v), 0);
+  const aBoire = btlEtat('apogee'), passees = btlEtat('passe');
+  const nbBas = enCave.filter(stockBas).length;
+  const toutesSorties = base.flatMap(v => (v.sorties || []).map(s => ({ ...s, vin: v })));
+  const debut12 = new Date(); debut12.setMonth(debut12.getMonth() - 11); debut12.setDate(1);
+  const cle12 = debut12.toISOString().slice(0, 7);
+  const sorties12 = toutesSorties.filter(s => (s.date || '').slice(0, 7) >= cle12);
+  const nbSorties12 = sorties12.reduce((s, x) => s + (x.nombre || 1), 0);
+
+  // Couleurs
+  const parCouleur = grouper(enCave, v => v.couleur || 'Autre', stockDe);
+  const couleurs = [...ORDRE_COULEURS, ...[...parCouleur.keys()].filter(c => !ORDRE_COULEURS.includes(c))]
+    .filter(c => parCouleur.get(c)).map(c => ({ label: c, value: parCouleur.get(c), couleur: couleurVin(c), action: 'couleur:' + c,
+      tip: `${c}\n${pluriel(parCouleur.get(c), 'bouteille')} · ${pct(parCouleur.get(c), btl)}\n${euro(enCave.filter(v => (v.couleur || 'Autre') === c).reduce((s, v) => s + valeur(v), 0))}` }));
+  const repCouleur = `<div class="rep-couleur">${couleurs.map(c => `<div data-action="${esc(c.action)}"><span class="pastille" style="background:${c.couleur}"></span>${esc(c.label)}<b>${nb(c.value)}</b><small>${pct(c.value, btl)}</small></div>`).join('')}</div>`;
+
+  // Régions (bouteilles)
+  const valRegion = grouper(enCave, v => v.region || 'Non renseignée', valeur);
+  const regions = [...grouper(enCave, v => v.region || 'Non renseignée', stockDe)].sort((a, b) => b[1] - a[1])
+    .map(([r, n]) => ({ label: r, value: n, action: r === 'Non renseignée' ? null : 'region:' + r,
+      tip: `${r}\n${pluriel(n, 'bouteille')} · ${pct(n, btl)}\nValeur ${euro(valRegion.get(r))}` }));
+
+  // Apogée : bouteilles par année, de l'année la plus ancienne à la plus lointaine
+  const parApogee = grouper(enCave.filter(v => Number(v.apogee)), v => Number(v.apogee), stockDe);
+  const sansApogee = enCave.filter(v => !Number(v.apogee)).reduce((s, v) => s + stockDe(v), 0);
+  let apogeeG = null, apogeeT = '';
+  if (parApogee.size) {
+    const ans = [...parApogee.keys()], a0 = Math.min(...ans, ANNEE), a1 = Math.max(...ans, ANNEE);
+    const items = [];
+    for (let a = a0; a <= a1; a++) {
+      const n = parApogee.get(a) || 0;
+      const etat = a < ANNEE ? 'Apogée passée' : a === ANNEE ? "À l'apogée cette année" : 'À garder';
+      items.push({ label: String(a), value: n, couleur: a < ANNEE ? 'var(--neutre)' : 'var(--s1)', tip: `Apogée ${a}\n${pluriel(n, 'bouteille')}\n${etat}` });
+    }
+    const iMax = items.reduce((m, it, i) => it.value > items[m].value ? i : m, 0);
+    apogeeG = grapheColonnes(items, { marque: ANNEE - a0, etiquettes: [...new Set([iMax, ANNEE - a0])] });
+    apogeeT = tableDonnees(['Année d\'apogée', 'Bouteilles'], items.filter(i => i.value).map(i => [i.label, nb(i.value)]));
+  }
+
+  // Millésimes
+  const parMill = grouper(enCave.filter(v => Number(v.millesime)), v => Number(v.millesime), stockDe);
+  let millG = null, millT = '';
+  if (parMill.size) {
+    const ans = [...parMill.keys()], a0 = Math.min(...ans), a1 = Math.max(...ans), items = [];
+    for (let a = a0; a <= a1; a++) items.push({ label: String(a), value: parMill.get(a) || 0, tip: `Millésime ${a}\n${pluriel(parMill.get(a) || 0, 'bouteille')}` });
+    const iMax = items.reduce((m, it, i) => it.value > items[m].value ? i : m, 0);
+    millG = grapheColonnes(items, { etiquettes: [iMax] });
+    millT = tableDonnees(['Millésime', 'Bouteilles'], items.filter(i => i.value).map(i => [i.label, nb(i.value)]));
+  }
+
+  // Prix d'achat par bouteille (tranches)
+  const tranches = [[0, 3, '< 3 €'], [3, 5, '3–5 €'], [5, 8, '5–8 €'], [8, 12, '8–12 €'], [12, 20, '12–20 €'], [20, Infinity, '20 € +']];
+  const prixItems = tranches.map(([a, b, l]) => {
+    const n = avecPrix.filter(v => Number(v.prix) >= a && Number(v.prix) < b).reduce((s, v) => s + stockDe(v), 0);
+    return { label: l, value: n, tip: `${l} la bouteille\n${pluriel(n, 'bouteille')} · ${pct(n, btlPrix)}` };
+  });
+  const iMaxPrix = prixItems.reduce((m, it, i) => it.value > prixItems[m].value ? i : m, 0);
+
+  // Lieux d'achat (valeur)
+  const btlLieu = grouper(enCave, v => v.lieuAchat || 'Non renseigné', stockDe);
+  const lieux = [...grouper(enCave, v => v.lieuAchat || 'Non renseigné', valeur)].filter(([, x]) => x > 0).sort((a, b) => b[1] - a[1])
+    .map(([l, x]) => ({ label: l, value: x, tip: `${l}\nValeur ${euro(x)} · ${pct(x, val)}\n${pluriel(btlLieu.get(l), 'bouteille')}` }));
+
+  // Top 10 valeur
+  const top = [...enCave].filter(v => valeur(v) > 0).sort((a, b) => valeur(b) - valeur(a)).slice(0, 10)
+    .map(v => ({ label: `${v.nom}${v.millesime ? ' ' + v.millesime : ''}`, value: valeur(v), action: 'vin:' + v.id,
+      tip: `${v.nom}${v.millesime ? ' ' + v.millesime : ''}\n${pluriel(stockDe(v), 'bouteille')} × ${euro(v.prix)}\n= ${euro(valeur(v))}` }));
+
+  // Sorties par mois (12 derniers mois)
+  const moisItems = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(debut12.getFullYear(), debut12.getMonth() + i, 1);
+    const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const n = sorties12.filter(s => s.date.slice(0, 7) === k).reduce((s, x) => s + (x.nombre || 1), 0);
+    const lib = d.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '');
+    moisItems.push({ label: lib, value: n, tip: `${d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}\n${pluriel(n, 'bouteille')} sortie${n > 1 ? 's' : ''}` });
+  }
+  const sortiesG = grapheColonnes(moisItems, { etiquettes: [11] });
+
+  // À boire en priorité
+  const prio = enCave.filter(v => Number(v.apogee) && Number(v.apogee) <= ANNEE)
+    .sort((a, b) => Number(a.apogee) - Number(b.apogee) || valeur(b) - valeur(a));
+
+  const statut = (couleur, sym) => `<i style="background:${couleur}">${sym}</i>`;
+  el.innerHTML = `
+    <div class="db-haut">
+      <div class="tuile hero"><div class="l">Valeur de la cave${filtresActifs() ? ' (filtrée)' : ''}</div><div class="v">${euro0(val)}</div>
+        <div class="d">${pluriel(btl, 'bouteille')} · ${pluriel(enCave.length, 'référence')}${sansPrix ? ` · ${pluriel(sansPrix, 'bouteille')} sans prix` : ''}</div></div>
+      <div class="tuile"><div class="l">Prix moyen / bouteille</div><div class="v">${euro(prixMoyen)}</div><div class="d">pondéré par le stock</div></div>
+      <div class="tuile cliquable" data-action="vue:lignes:apogee"><div class="l statut">${statut('var(--ok)', '✓')}À l'apogée en ${ANNEE}</div><div class="v">${nb(aBoire)}</div><div class="d">bouteilles à boire cette année</div></div>
+      <div class="tuile cliquable" data-action="vue:lignes:apogee"><div class="l statut">${statut('var(--serieux)', '!')}Apogée passée</div><div class="v">${nb(passees)}</div><div class="d">bouteilles à boire vite</div></div>
+      <div class="tuile cliquable" data-action="bas"><div class="l statut">${statut('var(--attention)', '↓')}Stock bas</div><div class="v">${nb(nbBas)}</div><div class="d">références sous le seuil</div></div>
+      <div class="tuile"><div class="l">Sorties sur 12 mois</div><div class="v">${nb(nbSorties12)}</div><div class="d">bouteilles bues</div></div>
+    </div>
+    <div class="db-grille">
+      ${carteGraph({ id: 'couleur', titre: 'Répartition par couleur', sousTitre: 'Bouteilles en cave · cliquer pour filtrer', graphe: grapheEmpile(couleurs) + repCouleur,
+        tableau: tableDonnees(['Couleur', 'Bouteilles', 'Part'], couleurs.map(c => [c.label, nb(c.value), pct(c.value, btl)])) })}
+      ${carteGraph({ id: 'region', titre: 'Bouteilles par région', sousTitre: 'Cliquer sur une région pour filtrer', graphe: grapheBarresH(regions),
+        tableau: tableDonnees(['Région', 'Bouteilles', 'Valeur'], regions.map(r => [r.label, nb(r.value), euro(valRegion.get(r.label))])) })}
+      ${carteGraph({ id: 'apogee', titre: "Calendrier d'apogée", sousTitre: `Bouteilles par année d'apogée · trait = ${ANNEE}${sansApogee ? ` · ${pluriel(sansApogee, 'bouteille')} sans apogée` : ''}`,
+        graphe: apogeeG || '<div class="vide-g">Aucune apogée renseignée</div>',
+        legende: apogeeG ? `<div class="legende"><span><i class="cle" style="background:var(--neutre)"></i>Apogée passée</span><span><i class="cle" style="background:var(--s1)"></i>Cette année et à venir</span></div>` : '',
+        tableau: apogeeT })}
+      <div class="graph">
+        <div class="tete"><div><h3>À boire en priorité</h3><div class="st">Apogée atteinte ou passée, la plus ancienne d'abord</div></div></div>
+        ${prio.length ? `<ul class="prio">${prio.slice(0, 8).map(v => { const a = etatApogee(v); return `<li data-action="vin:${v.id}">
+          <span class="pastille" style="background:${couleurVin(v.couleur)}"></span>
+          <span class="n"><b>${hl(v.nom)}</b> ${hl(v.millesime || '')} <span class="sous">${hl(v.appellation || '')}</span>${extrait(v)}</span>
+          <span class="badge ${a.cls}">${esc(v.apogee)}</span>
+          <span class="num">${stockDe(v)} btl</span>
+          <span class="sous" style="width:44px">${v.position ? '📍' + esc(v.position) : ''}</span></li>`; }).join('')}</ul>
+          ${prio.length > 8 ? `<button class="lien" data-action="vue:lignes:apogee">Voir les ${prio.length} vins →</button>` : ''}`
+          : '<div class="vide-g">Rien d\'urgent : aucun vin n\'a atteint son apogée.</div>'}
+      </div>
+      ${carteGraph({ id: 'millesime', titre: 'Millésimes', sousTitre: 'Bouteilles en cave par millésime', graphe: millG || '<div class="vide-g">Aucun millésime renseigné</div>', tableau: millT })}
+      ${carteGraph({ id: 'prix', titre: "Prix d'achat par bouteille", sousTitre: `Bouteilles par tranche de prix${sansPrix ? ` · ${pluriel(sansPrix, 'bouteille')} sans prix` : ''}`,
+        graphe: grapheColonnes(prixItems, { etiquettes: [iMaxPrix] }) || '<div class="vide-g">Aucun prix renseigné</div>',
+        tableau: tableDonnees(['Tranche', 'Bouteilles'], prixItems.map(i => [i.label, nb(i.value)])) })}
+      ${carteGraph({ id: 'top', titre: 'Les 10 vins qui pèsent le plus', sousTitre: 'Valeur en stock · cliquer pour ouvrir la fiche', graphe: grapheBarresH(top, { fmt: euro0 }),
+        tableau: tableDonnees(['Vin', 'Bouteilles', 'Valeur'], top.map(t => [t.label, nb(stockDe(vins.find(v => 'vin:' + v.id === t.action))), euro(t.value)])) })}
+      ${carteGraph({ id: 'lieu', titre: "Valeur par lieu d'achat", sousTitre: 'Valeur en stock', graphe: grapheBarresH(lieux, { fmt: euro0 }),
+        tableau: tableDonnees(['Lieu', 'Bouteilles', 'Valeur'], lieux.map(l => [l.label, nb(btlLieu.get(l.label)), euro(l.value)])) })}
+      ${carteGraph({ id: 'sorties', titre: 'Sorties par mois', sousTitre: 'Bouteilles sorties sur les 12 derniers mois', plein: true,
+        graphe: sortiesG || '<div class="vide-g">Aucune sortie enregistrée sur les 12 derniers mois. Ouvrez une fiche et cliquez sur « Sortir une bouteille ».</div>',
+        tableau: sortiesG ? tableDonnees(['Mois', 'Bouteilles'], moisItems.map(i => [i.label, nb(i.value)])) : '' })}
+    </div>`;
+}
+
+// Actions du tableau de bord (filtres, ouverture de fiche, bascule tableau)
+$('#vue-dashboard').addEventListener('click', e => {
+  const b = e.target.closest('[data-bascule]');
+  if (b) {
+    const carte = b.closest('.graph'), tv = carte.querySelector('.t-vue'), gv = carte.querySelector('.g-vue');
+    const montrerTable = tv.hidden;
+    tv.hidden = !montrerTable; gv.hidden = montrerTable;
+    b.textContent = montrerTable ? 'Graphique' : 'Tableau';
+    return;
+  }
+  const a = e.target.closest('[data-action]');
+  if (a) executer(a.dataset.action);
+});
+$('#vue-dashboard').addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset.action) { e.preventDefault(); executer(e.target.dataset.action); }
+});
+function executer(action) {
+  const [type, ...reste] = action.split(':');
+  const arg = reste.join(':');
+  if (type === 'vin') return afficherDetail(arg);
+  if (type === 'couleur') $('#f-couleur').value = $('#f-couleur').value === arg ? '' : arg;
+  if (type === 'region') $('#f-region').value = $('#f-region').value === arg ? '' : arg;
+  if (type === 'bas') { $('#f-bas').checked = true; changerVue('lignes'); return; }
+  if (type === 'vue') { const [v, tri] = arg.split(':'); if (tri) { $('#f-tri').value = tri; triDesc = false; } changerVue(v); return; }
+  afficher();
+}
+
+// ---------- Vue carte des vins ----------
+// Régions viticoles, approximées par départements. « alias » : noms acceptés dans le champ Région des fiches.
+// dx / dy : décalage de l'étiquette pour éviter les chevauchements.
+const REGIONS_VIN = [
+  { nom: 'Alsace', deps: ['67', '68'] },
+  { nom: 'Lorraine', deps: ['54', '55', '57', '88'], alias: ['Moselle', 'Côtes de Toul'] },
+  { nom: 'Champagne', deps: ['51', '10', '02', '52'] },
+  { nom: 'Bourgogne', deps: ['21', '71', '89'], alias: ['Chablis', 'Mâconnais', 'Burgundy'] },
+  { nom: 'Beaujolais', deps: ['69'], dx: -14 },
+  { nom: 'Jura', deps: ['39'] },
+  { nom: 'Savoie', deps: ['73', '74', '01'], alias: ['Bugey', 'Savoie-Bugey'], dx: 10 },
+  { nom: 'Rhône', deps: ['42', '07', '26', '84'], alias: ['Vallée du Rhône', 'Côtes du Rhône'] },
+  { nom: 'Provence', deps: ['13', '83', '06', '04', '05'] },
+  { nom: 'Corse', deps: ['2A', '2B'], dx: -8 },
+  { nom: 'Languedoc-Roussillon', deps: ['34', '11', '30', '66'], alias: ['Languedoc', 'Roussillon'] },
+  { nom: 'Bordeaux', deps: ['33'], alias: ['Bordelais'] },
+  { nom: 'Sud-Ouest', deps: ['24', '47', '46', '82', '81', '31', '32', '40', '64', '65', '12', '09'], alias: ['Bergerac', 'Cahors', 'Gaillac', 'Madiran', 'Jurançon'] },
+  { nom: 'Charentes', deps: ['16', '17'], alias: ['Cognac'] },
+  { nom: 'Loire', deps: ['44', '49', '37', '41', '18', '58', '45', '36', '85', '86', '79', '72', '03', '63'], alias: ['Val de Loire', 'Vallée de la Loire', 'Centre-Loire'] },
+];
+const cleRegion = x => normaliser(x).replace(/[^a-z]/g, '');
+const INDEX_REGIONS = new Map(REGIONS_VIN.flatMap(r => [r.nom, ...(r.alias || [])].map(a => [cleRegion(a), r])));
+const regionVinDe = v => INDEX_REGIONS.get(cleRegion(v.region)) || null;
+let regionSel = null;      // région zoomée sur la carte
+let appSel = null;         // appellation (ou groupe) sélectionnée dans le zoom
+let vbCourant = null;      // cadrage actuel de la carte (pour l'animation)
+
+// ---------- Appellations : position approximative (latitude, longitude) ----------
+// [nom, lat, lon, ...alias] — le point marque le cœur du vignoble ou le village principal
+const APPELLATIONS = {
+  'Bordeaux': [
+    ['Saint-Estèphe', 45.26, -0.77], ['Pauillac', 45.20, -0.75], ['Saint-Julien', 45.16, -0.74], ['Margaux', 45.04, -0.67],
+    ['Listrac-Médoc', 45.07, -0.79, 'Listrac'], ['Moulis', 45.06, -0.77, 'Moulis-en-Médoc'], ['Médoc', 45.35, -0.95], ['Haut-Médoc', 45.10, -0.75],
+    ['Pessac-Léognan', 44.75, -0.62], ['Graves', 44.60, -0.40], ['Sauternes', 44.53, -0.34], ['Barsac', 44.61, -0.32],
+    ['Saint-Émilion', 44.89, -0.155, 'Saint-Émilion Grand Cru'], ['Pomerol', 44.93, -0.20], ['Lalande-de-Pomerol', 44.96, -0.21, 'Lalande Pomerol'],
+    ['Fronsac', 44.93, -0.27], ['Canon-Fronsac', 44.95, -0.30], ['Entre-Deux-Mers', 44.75, -0.30], ['Côtes de Bourg', 45.04, -0.56],
+    ['Blaye', 45.13, -0.66, 'Côtes de Blaye', 'Blaye Côtes de Bordeaux'], ['Castillon', 44.85, -0.04, 'Castillon Côtes de Bordeaux'],
+    ['Montagne-Saint-Émilion', 44.93, -0.13], ['Lussac-Saint-Émilion', 44.95, -0.09], ['Puisseguin-Saint-Émilion', 44.92, -0.07],
+    ['Cadillac', 44.64, -0.32, 'Cadillac Côtes de Bordeaux'], ['Loupiac', 44.62, -0.30], ['Sainte-Croix-du-Mont', 44.59, -0.28],
+  ],
+  'Bourgogne': [
+    ['Chablis', 47.81, 3.80, 'Petit Chablis'], ['Irancy', 47.71, 3.66], ['Gevrey-Chambertin', 47.226, 4.968], ['Morey-Saint-Denis', 47.195, 4.96],
+    ['Chambolle-Musigny', 47.185, 4.955], ['Vougeot', 47.175, 4.96, 'Clos de Vougeot'], ['Vosne-Romanée', 47.16, 4.95],
+    ['Nuits-Saint-Georges', 47.137, 4.95], ['Côte de Nuits-Villages', 47.20, 4.97], ['Aloxe-Corton', 47.07, 4.86, 'Corton', 'Corton-Charlemagne'],
+    ['Savigny-lès-Beaune', 47.06, 4.82], ['Beaune', 47.025, 4.84, 'Côte de Beaune'], ['Pommard', 47.008, 4.80], ['Volnay', 46.99, 4.77],
+    ['Meursault', 46.98, 4.77], ['Puligny-Montrachet', 46.945, 4.75], ['Chassagne-Montrachet', 46.935, 4.73], ['Santenay', 46.91, 4.70],
+    ['Rully', 46.875, 4.745], ['Mercurey', 46.84, 4.72], ['Givry', 46.78, 4.74], ['Montagny', 46.71, 4.75],
+    ['Mâcon', 46.31, 4.83, 'Mâcon-Villages'], ['Pouilly-Fuissé', 46.28, 4.75], ['Saint-Véran', 46.30, 4.73], ['Viré-Clessé', 46.43, 4.86],
+  ],
+  'Beaujolais': [
+    ['Saint-Amour', 46.25, 4.69], ['Juliénas', 46.24, 4.71], ['Chénas', 46.22, 4.72], ['Moulin-à-Vent', 46.21, 4.74], ['Fleurie', 46.19, 4.70],
+    ['Chiroubles', 46.18, 4.66], ['Morgon', 46.16, 4.70], ['Régnié', 46.14, 4.64], ['Brouilly', 46.11, 4.68], ['Côte de Brouilly', 46.10, 4.66],
+  ],
+  'Rhône': [
+    ['Côte-Rôtie', 45.49, 4.80], ['Condrieu', 45.46, 4.77], ['Saint-Joseph', 45.15, 4.81], ['Hermitage', 45.07, 4.85],
+    ['Crozes-Hermitage', 45.10, 4.88], ['Cornas', 44.96, 4.85], ['Saint-Péray', 44.95, 4.84], ['Clairette de Die', 44.75, 5.37, 'Die'],
+    ['Grignan-les-Adhémar', 44.42, 4.91], ['Vinsobres', 44.33, 5.06], ['Visan', 44.31, 4.95], ['Cairanne', 44.23, 4.93], ['Rasteau', 44.23, 4.99],
+    ['Séguret', 44.20, 5.02], ['Sablet', 44.19, 5.00], ['Plan de Dieu', 44.18, 4.95], ['Gigondas', 44.16, 5.005], ['Vacqueyras', 44.14, 4.98],
+    ['Beaumes-de-Venise', 44.12, 5.03, 'Muscat de Beaumes-de-Venise'], ['Laudun', 44.11, 4.66], ['Châteauneuf-du-Pape', 44.06, 4.83],
+    ['Lirac', 44.03, 4.69], ['Tavel', 43.99, 4.70], ['Ventoux', 44.10, 5.20, 'Côtes du Ventoux'], ['Luberon', 43.80, 5.40, 'Côtes du Luberon'],
+    ['Costières de Nîmes', 43.73, 4.40], ['Duché d\'Uzès', 44.01, 4.42],
+  ],
+  'Languedoc-Roussillon': [
+    ['Saint-Chinian', 43.42, 2.95], ['Faugères', 43.57, 3.18], ['Minervois', 43.30, 2.70], ['Minervois-La Livinière', 43.32, 2.64, 'La Livinière'],
+    ['Corbières', 43.05, 2.65], ['Corbières-Boutenac', 43.15, 2.80, 'Boutenac'], ['Fitou', 42.89, 2.98], ['Pic Saint-Loup', 43.78, 3.80],
+    ['Terrasses du Larzac', 43.70, 3.45], ['Picpoul de Pinet', 43.41, 3.53, 'Picpoul'], ['La Clape', 43.15, 3.10], ['Limoux', 43.05, 2.22, 'Blanquette de Limoux', 'Crémant de Limoux'],
+    ['Cabardès', 43.35, 2.25], ['Malepère', 43.13, 2.10], ['Pézenas', 43.46, 3.42], ['Grès de Montpellier', 43.62, 3.88],
+    ['Muscat de Frontignan', 43.45, 3.75, 'Frontignan'], ['Muscat de Lunel', 43.68, 4.13], ['Clairette du Languedoc', 43.60, 3.45],
+    ['Tautavel', 42.82, 2.75, 'Côtes du Roussillon Villages Tautavel'], ['Maury', 42.81, 2.60], ['Rivesaltes', 42.77, 2.87, 'Muscat de Rivesaltes'],
+    ['Côtes du Roussillon Villages', 42.78, 2.70], ['Collioure', 42.53, 3.08], ['Banyuls', 42.48, 3.13],
+  ],
+  'Sud-Ouest': [
+    ['Bergerac', 44.85, 0.48, 'Côtes de Bergerac'], ['Monbazillac', 44.79, 0.49], ['Pécharmant', 44.87, 0.53], ['Montravel', 44.87, 0.03],
+    ['Côtes de Duras', 44.68, 0.18, 'Duras'], ['Côtes du Marmandais', 44.50, 0.17, 'Marmandais'], ['Buzet', 44.26, 0.30], ['Brulhois', 44.13, 0.65],
+    ['Cahors', 44.47, 1.30], ['Fronton', 43.84, 1.39], ['Gaillac', 43.90, 1.90], ['Marcillac', 44.47, 2.47], ['Saint-Mont', 43.65, 0.15],
+    ['Madiran', 43.55, -0.06], ['Pacherenc du Vic-Bilh', 43.56, -0.04, 'Pacherenc'], ['Jurançon', 43.29, -0.40], ['Irouléguy', 43.18, -1.32],
+    ['Tursan', 43.70, -0.45], ['Floc de Gascogne', 43.80, 0.10],
+  ],
+  'Loire': [
+    ['Muscadet Sèvre et Maine', 47.15, -1.35, 'Muscadet'], ['Gros-Plant', 47.10, -1.60, 'Gros Plant du Pays Nantais'], ['Fiefs Vendéens', 46.60, -1.40],
+    ['Savennières', 47.38, -0.66], ['Coteaux du Layon', 47.25, -0.62, 'Layon'], ['Chaume', 47.35, -0.65, 'Quarts de Chaume', 'Chaumes'],
+    ['Bonnezeaux', 47.24, -0.47], ['Coteaux de l\'Aubance', 47.37, -0.50], ['Saumur', 47.26, -0.08, 'Saumur Brut'], ['Saumur-Champigny', 47.24, -0.04],
+    ['Chinon', 47.17, 0.24], ['Bourgueil', 47.28, 0.17], ['Saint-Nicolas-de-Bourgueil', 47.28, 0.13], ['Vouvray', 47.41, 0.80],
+    ['Montlouis-sur-Loire', 47.39, 0.83, 'Montlouis'], ['Jasnières', 47.73, 0.55], ['Coteaux du Loir', 47.68, 0.45], ['Cheverny', 47.50, 1.46],
+    ['Cour-Cheverny', 47.51, 1.46], ['Valençay', 47.16, 1.56], ['Reuilly', 47.08, 2.04], ['Quincy', 47.13, 2.16], ['Menetou-Salon', 47.23, 2.49],
+    ['Sancerre', 47.33, 2.84], ['Pouilly-Fumé', 47.29, 2.96, 'Pouilly-sur-Loire', 'Blanc Fumé de Pouilly'], ['Coteaux du Giennois', 47.60, 2.70],
+    ['Haut-Poitou', 46.75, 0.25], ['Saint-Pourçain', 46.31, 3.29], ['Côtes d\'Auvergne', 45.80, 3.15], ['Côte Roannaise', 46.00, 3.95],
+  ],
+  'Champagne': [['Rosé des Riceys', 47.99, 4.37, 'Riceys']],
+  'Provence': [
+    ['Bandol', 43.14, 5.75], ['Cassis', 43.22, 5.54], ['Palette', 43.50, 5.50], ['Coteaux d\'Aix-en-Provence', 43.60, 5.40],
+    ['Les Baux-de-Provence', 43.74, 4.80], ['Coteaux Varois', 43.42, 6.05], ['Bellet', 43.73, 7.22], ['Pierrevert', 43.81, 5.75],
+  ],
+  'Jura': [['Arbois', 46.90, 5.77], ['Château-Chalon', 46.75, 5.63], ['L\'Étoile', 46.72, 5.53]],
+  'Savoie': [['Apremont', 45.50, 5.94], ['Chignin', 45.52, 6.02], ['Crépy', 46.30, 6.35], ['Seyssel', 45.96, 5.83], ['Bugey', 45.85, 5.55], ['Roussette de Savoie', 45.65, 5.90]],
+  'Corse': [['Patrimonio', 42.70, 9.36], ['Muscat du Cap Corse', 42.90, 9.40, 'Cap Corse'], ['Calvi', 42.56, 8.76], ['Ajaccio', 41.93, 8.74], ['Sartène', 41.62, 8.97], ['Figari', 41.49, 9.13], ['Porto-Vecchio', 41.59, 9.28]],
+  'Lorraine': [['Côtes de Toul', 48.68, 5.85], ['Moselle', 49.10, 6.20]],
+  'Charentes': [['Cognac', 45.69, -0.33]],
+};
+// Appellations qui couvrent toute une région : pas de point précis sur la carte
+const APPELLATIONS_REGIONALES = ['Languedoc', 'Coteaux du Languedoc', 'Pays d\'Oc', 'IGP Pays d\'Oc', 'Côtes du Rhône', 'Côtes du Rhône Villages',
+  'Bordeaux', 'Bordeaux Supérieur', 'Bourgogne', 'Bourgogne Aligoté', 'Coteaux Bourguignons', 'Crémant de Bourgogne', 'Hautes-Côtes de Beaune',
+  'Hautes-Côtes de Nuits', 'Champagne', 'Coteaux Champenois', 'Alsace', 'Alsace Grand Cru', 'Crémant d\'Alsace', 'Crémant de Loire', 'Val de Loire',
+  'Touraine', 'Anjou', 'Rosé de Loire', 'Rosé d\'Anjou', 'Cabernet d\'Anjou', 'Beaujolais', 'Beaujolais Villages', 'Côtes de Provence', 'Provence',
+  'Corse', 'Vin de Corse', 'Savoie', 'Vin de Savoie', 'Jura', 'Côtes du Jura', 'Crémant du Jura', 'Sud-Ouest', 'Côtes de Gascogne', 'Comté Tolosan',
+  'Pineau des Charentes', 'Méditerranée', 'Vin de France', 'Roussillon', 'Côtes du Roussillon', 'Côtes Catalanes', 'Lorraine', 'Pays du Val de Loire'];
+// Cépages ou couleurs parfois saisis à la place de l'appellation
+const CEPAGES = ['Pinot noir', 'Pinot gris', 'Pinot blanc', 'Chardonnay', 'Viognier', 'Sauvignon', 'Sauvignon blanc', 'Merlot', 'Cabernet',
+  'Cabernet sauvignon', 'Cabernet franc', 'Syrah', 'Grenache', 'Chenin', 'Gamay', 'Muscat', 'Malbec', 'Riesling', 'Gewurztraminer', 'Carignan',
+  'Mourvèdre', 'Cinsault', 'Colombard', 'Marselan', 'Rouge', 'Blanc', 'Rosé'];
+// Clé de comparaison : sans accents ni ponctuation, « St » = « Saint », sans « 1er cru » ni pluriel final
+const cleApp = x => normaliser(x).replace(/\bste\b/g, 'sainte').replace(/\bst\b/g, 'saint')
+  .replace(/\b(1er|premier|grand)\s+cru\b/g, '').replace(/[^a-z]/g, '').replace(/s$/, '');
+const INDEX_APP = new Map();
+for (const [region, liste] of Object.entries(APPELLATIONS))
+  for (const [nom, lat, lon, ...alias] of liste)
+    for (const a of [nom, ...alias]) INDEX_APP.set(cleApp(a), { nom, lat, lon, region });
+const SET_REGIONALES = new Set(APPELLATIONS_REGIONALES.map(cleApp));
+const SET_CEPAGES = new Set(CEPAGES.map(cleApp));
+function infoAppellation(v) {
+  const k = cleApp(v.appellation);
+  if (!k) return { type: 'vide' };
+  if (INDEX_APP.has(k)) return { type: 'point', ...INDEX_APP.get(k) };
+  if (SET_REGIONALES.has(k)) return { type: 'regionale' };
+  if (SET_CEPAGES.has(k)) return { type: 'cepage' };
+  return { type: 'inconnue' };
+}
+const GROUPES_APP = {
+  regionale: ['Appellations régionales', 'couvrent toute la région, pas de point précis'],
+  cepage: ['Cépage ou couleur', 'indiqué à la place de l\'appellation'],
+  inconnue: ['Non localisées', 'appellation absente de la liste intégrée'],
+  vide: ['Sans appellation', 'champ vide dans la fiche'],
+};
+
+function projeter(carte, lat, lon) {
+  const p = carte.proj;
+  return [(lon * p.cosLat - p.minx) * p.echelle, (-lat - p.miny) * p.echelle];
+}
+// Rectangle englobant de chaque région, calculé une fois à partir des tracés des départements
+let BBOX_REGIONS = null;
+function bboxRegion(carte, nom) {
+  if (!BBOX_REGIONS) {
+    BBOX_REGIONS = {};
+    const parCode = new Map(carte.departements.map(d => [d.code, d]));
+    for (const r of REGIONS_VIN) {
+      const b = [Infinity, Infinity, -Infinity, -Infinity];
+      for (const c of r.deps) for (const m of (parCode.get(c)?.d || '').matchAll(/(-?[\d.]+),(-?[\d.]+)/g)) {
+        const x = +m[1], y = +m[2];
+        b[0] = Math.min(b[0], x); b[1] = Math.min(b[1], y); b[2] = Math.max(b[2], x); b[3] = Math.max(b[3], y);
+      }
+      BBOX_REGIONS[r.nom] = b;
+    }
+  }
+  return BBOX_REGIONS[nom];
+}
+// Cadrage au même format que la carte entière : sur les points d'appellation s'il y en a
+// (avec une taille minimale pour garder du contexte), sinon sur toute la région
+function cadrage(b, points, ref) {
+  let [x0, y0, x1, y1] = b;
+  if (points.length) {
+    x0 = Math.min(...points.map(p => p[0])); x1 = Math.max(...points.map(p => p[0]));
+    y0 = Math.min(...points.map(p => p[1])); y1 = Math.max(...points.map(p => p[1]));
+    const mini = 90, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    if (x1 - x0 < mini) { x0 = cx - mini / 2; x1 = cx + mini / 2; }
+    if (y1 - y0 < mini) { y0 = cy - mini / 2; y1 = cy + mini / 2; }
+  }
+  const marge = Math.max(x1 - x0, y1 - y0) * 0.18;
+  x0 -= marge; y0 -= marge; x1 += marge; y1 += marge;
+  let w = x1 - x0, h = y1 - y0;
+  const ratio = ref[2] / ref[3];
+  if (w / h > ratio) { const nh = w / ratio; y0 -= (nh - h) / 2; h = nh; } else { const nw = h * ratio; x0 -= (nw - w) / 2; w = nw; }
+  return [x0, y0, w, h];
+}
+function animerCadrage(svg, de, vers) {
+  const fin = () => svg.setAttribute('viewBox', vers.join(' '));
+  if (!de || de.join() === vers.join() || !window.requestAnimationFrame || matchMedia('(prefers-reduced-motion: reduce)').matches) return fin();
+  svg.setAttribute('viewBox', de.join(' '));
+  const t0 = performance.now(), duree = 420;
+  const pas = t => {
+    const p = Math.min(1, (t - t0) / duree), e = 1 - Math.pow(1 - p, 3);
+    svg.setAttribute('viewBox', de.map((v, i) => v + (vers[i] - v) * e).join(' '));
+    if (p < 1) requestAnimationFrame(pas);
+  };
+  requestAnimationFrame(pas);
+}
+// Place les noms des appellations sans chevauchement : on mesure chaque nom, puis on essaie
+// 8 positions autour du point ; si tout est pris, on éloigne le nom et on le relie au point par un trait.
+// Un nom qui ne trouve aucune place est omis (il reste dans l'infobulle et dans le tableau).
+function placerEtiquettes(svg, points, k, vb) {
+  const groupe = svg.querySelector('.etiqs-app');
+  if (!groupe) return;
+  const NS = 'http://www.w3.org/2000/svg', fs = 11.5 * k, ecart = 4 * k;
+  const boites = points.map(p => [p.x - p.r - k, p.y - p.r - k, p.x + p.r + k, p.y + p.r + k]);
+  const horsCadre = b => b[0] < vb[0] + 2 * k || b[1] < vb[1] + 2 * k || b[2] > vb[0] + vb[2] - 2 * k || b[3] > vb[1] + vb[3] - 2 * k;
+  const libre = b => !horsCadre(b) && !boites.some(o => b[0] < o[2] && b[2] > o[0] && b[1] < o[3] && b[3] > o[1]);
+  for (const p of points) {
+    const t = document.createElementNS(NS, 'text');
+    t.setAttribute('class', 'etiq etiq-app');
+    t.setAttribute('dominant-baseline', 'central');
+    t.setAttribute('style', `font-size:${fs.toFixed(3)}px; stroke-width:${(3 * k).toFixed(3)}px`);
+    t.innerHTML = `<tspan class="n1">${esc(p.nom)}</tspan><tspan class="n2"> · ${p.btl}</tspan>`;
+    groupe.appendChild(t);
+    let w;
+    try { w = t.getBBox().width; } catch { w = 0; }
+    if (!w) w = (p.nom.length + String(p.btl).length + 3) * fs * 0.62;  // estimation si la mesure est impossible
+    w += 2 * k;
+    const h = fs * 1.25;
+    let place = null;
+    for (const mult of [1, 2.4, 4]) {
+      const d = p.r + ecart * mult * (mult > 1 ? 2 : 1), dg = d * 0.75;
+      const essais = [
+        [p.x + d, p.y, 'start'], [p.x - d, p.y, 'end'], [p.x, p.y - d - h / 2, 'middle'], [p.x, p.y + d + h / 2, 'middle'],
+        [p.x + dg, p.y - dg - h / 2, 'start'], [p.x + dg, p.y + dg + h / 2, 'start'], [p.x - dg, p.y - dg - h / 2, 'end'], [p.x - dg, p.y + dg + h / 2, 'end'],
+      ];
+      for (const [x, y, a] of essais) {
+        const x0 = a === 'start' ? x : a === 'end' ? x - w : x - w / 2;
+        const b = [x0, y - h / 2, x0 + w, y + h / 2];
+        if (libre(b)) { place = { x, y, a, b, rappel: mult > 1 }; break; }
+      }
+      if (place) break;
+    }
+    if (!place) { t.remove(); continue; }
+    t.setAttribute('x', place.x.toFixed(3)); t.setAttribute('y', place.y.toFixed(3)); t.setAttribute('text-anchor', place.a);
+    boites.push(place.b);
+    if (place.rappel) {
+      // Trait du bord du cercle vers le point le plus proche de l'étiquette
+      const cx = Math.max(place.b[0], Math.min(p.x, place.b[2])), cy = Math.max(place.b[1], Math.min(p.y, place.b[3]));
+      const ang = Math.atan2(cy - p.y, cx - p.x);
+      const l = document.createElementNS(NS, 'line');
+      l.setAttribute('class', 'rappel');
+      l.setAttribute('x1', (p.x + Math.cos(ang) * p.r).toFixed(3)); l.setAttribute('y1', (p.y + Math.sin(ang) * p.r).toFixed(3));
+      l.setAttribute('x2', cx.toFixed(3)); l.setAttribute('y2', cy.toFixed(3));
+      groupe.insertBefore(l, groupe.firstChild);
+    }
+  }
+}
+
+function afficherCarte() {
+  const el = $('#vue-carte'), carte = window.CARTE_FRANCE;
+  if (!carte) { el.innerHTML = '<div class="vide">Le fichier carte-france.js est introuvable : il doit être à côté de index.html.</div>'; return; }
+  const liste = filtrer({ avecEpuises: false });
+  const stats = new Map(REGIONS_VIN.map(r => [r.nom, { r, btl: 0, val: 0, vins: [] }]));
+  const horsCarte = [];
+  for (const v of liste) {
+    const r = regionVinDe(v);
+    if (!r) { horsCarte.push(v); continue; }
+    const st = stats.get(r.nom);
+    st.btl += stockDe(v); st.val += valeur(v); st.vins.push(v);
+  }
+  const max = Math.max(1, ...[...stats.values()].map(x => x.btl));
+  const regionDuDep = new Map(REGIONS_VIN.flatMap(r => r.deps.map(d => [d, r])));
+  const remplissage = st => st.btl
+    ? `color-mix(in srgb, var(--s1) ${Math.round(20 + 80 * st.btl / max)}%, var(--carte))`
+    : 'color-mix(in srgb, var(--neutre) 45%, var(--carte))';
+  const tipRegion = st => `${st.r.nom}\n` + (st.btl
+    ? `${pluriel(st.btl, 'bouteille')} · ${pluriel(st.vins.length, 'référence')}\nValeur ${euro(st.val)}`
+    : 'Aucune bouteille en cave');
+  if (regionSel && !stats.has(regionSel)) regionSel = null;
+  const zoom = regionSel && stats.get(regionSel);
+  const VB_FRANCE = [-4, -4, carte.largeur + 8, carte.hauteur + 8];
+
+  // --- Appellations de la région zoomée
+  let points = [], groupes = {}, ecarts = [], vb = VB_FRANCE;
+  if (zoom) {
+    const parApp = new Map();
+    for (const v of zoom.vins) {
+      const info = infoAppellation(v);
+      if (info.type === 'point') {
+        if (!parApp.has(info.nom)) parApp.set(info.nom, { ...info, btl: 0, val: 0, vins: [] });
+        const a = parApp.get(info.nom);
+        a.btl += stockDe(v); a.val += valeur(v); a.vins.push(v);
+        if (info.region !== zoom.r.nom && !ecarts.includes(info.nom)) ecarts.push(info.nom);
+      } else (groupes[info.type] ||= []).push(v);
+    }
+    const apps = [...parApp.values()];
+    const coords = apps.map(a => projeter(carte, a.lat, a.lon));
+    vb = cadrage(bboxRegion(carte, zoom.r.nom), coords, VB_FRANCE);
+    const k = vb[2] / VB_FRANCE[2], maxA = Math.max(1, ...apps.map(a => a.btl));
+    points = apps.map((a, i) => ({ ...a, x: coords[i][0], y: coords[i][1], r: (3.5 + 8 * Math.sqrt(a.btl / maxA)) * k }))
+      .sort((a, b) => b.btl - a.btl);
+    if (appSel?.startsWith('p:') && !parApp.has(appSel.slice(2))) appSel = null;
+    if (appSel?.startsWith('g:') && !groupes[appSel.slice(2)]) appSel = null;
+  } else appSel = null;
+  const k = vb[2] / VB_FRANCE[2];
+
+  // Étiquettes des régions (vue France uniquement)
+  const depsParCode = new Map(carte.departements.map(d => [d.code, d]));
+  const etiquettes = zoom ? '' : REGIONS_VIN.map(r => {
+    const ds = r.deps.map(c => depsParCode.get(c)).filter(Boolean);
+    const aire = ds.reduce((s, d) => s + d.aire, 0) || 1;
+    const x = ds.reduce((s, d) => s + d.cx * d.aire, 0) / aire + (r.dx || 0);
+    const y = ds.reduce((s, d) => s + d.cy * d.aire, 0) / aire + (r.dy || 0);
+    const st = stats.get(r.nom);
+    return `<text class="etiq ${st.btl ? '' : 'vide-r'}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle">
+      <tspan class="n1" x="${x.toFixed(1)}" dy="${st.btl ? -2 : 4}">${esc(r.nom)}</tspan>
+      ${st.btl ? `<tspan class="n2" x="${x.toFixed(1)}" dy="13">${nb(st.btl)} btl</tspan>` : ''}</text>`;
+  }).join('');
+
+  const chemins = carte.departements.map(d => {
+    const r = regionDuDep.get(d.code);
+    const estompe = zoom && (!r || r.nom !== zoom.r.nom) ? ' estompe' : '';
+    if (!r) return `<path class="dep hors${estompe}" d="${d.d}"/>`;
+    const st = stats.get(r.nom);
+    // En zoom, la région choisie passe en teinte claire pour que les points d'appellation ressortent
+    const fond = zoom && r.nom === zoom.r.nom ? 'color-mix(in srgb, var(--s1) 12%, var(--carte))' : remplissage(st);
+    return `<path class="dep vin${estompe}" data-region="${esc(r.nom)}" d="${d.d}" fill="${fond}" data-tip="${esc(tipRegion(st) + '\n(' + d.nom + ')')}"/>`;
+  }).join('');
+
+  // Frontières des régions (blanches), contour du pays, puis la région zoomée par-dessus
+  const contours = REGIONS_VIN.filter(r => carte.regions?.[r.nom] && r.nom !== regionSel).map(r => `<path class="reg" d="${carte.regions[r.nom]}"/>`).join('')
+    + (carte.contour ? `<path class="pays" d="${carte.contour}"/>` : '')
+    + (regionSel && carte.regions?.[regionSel] ? `<path class="reg sel" d="${carte.regions[regionSel]}"/>` : '');
+
+  // Points des appellations : surface proportionnelle au nombre de bouteilles
+  const marques = points.map(p => `<circle class="app ${appSel === 'p:' + p.nom ? 'sel' : ''}" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${p.r.toFixed(2)}"
+      data-app="p:${esc(p.nom)}" tabindex="0" data-tip="${esc(`${p.nom}\n${pluriel(p.btl, 'bouteille')} · ${pluriel(p.vins.length, 'référence')}\nValeur ${euro(p.val)}${p.region !== zoom.r.nom ? `\nAppellation du ${p.region === 'Sud-Ouest' ? 'Sud-Ouest' : 'vignoble ' + p.region}` : ''}`)}"/>`).join('')
+    + (points.length ? '<g class="etiqs-app"></g>' : '');
+
+  const ligneVin = v => `<li data-action="vin:${v.id}"><span class="pastille" style="background:${couleurVin(v.couleur)}"></span>
+    <span class="n"><b>${hl(v.nom)}</b> ${hl(v.millesime || '')} <span class="sous">${hl(v.appellation || '')}</span>${extrait(v)}</span>
+    <span class="num">${stockDe(v)} btl</span></li>`;
+  const triVins = l => [...l].sort((a, b) => stockDe(b) - stockDe(a));
+
+  let panneau;
+  if (zoom) {
+    const btlGroupe = l => l.reduce((s, v) => s + stockDe(v), 0);
+    const vinsSel = appSel?.startsWith('p:') ? points.find(p => 'p:' + p.nom === appSel)?.vins
+      : appSel?.startsWith('g:') ? groupes[appSel.slice(2)] : null;
+    const titreSel = appSel?.startsWith('p:') ? appSel.slice(2) : appSel ? GROUPES_APP[appSel.slice(2)][0] : '';
+    panneau = `
+      <div class="graph">
+        <div class="tete"><div><h3>${esc(zoom.r.nom)}</h3><div class="st">${zoom.btl ? `${pluriel(zoom.btl, 'bouteille')} · ${pluriel(zoom.vins.length, 'référence')} · ${euro(zoom.val)}` : 'Aucune bouteille en cave'}</div></div>
+          <button class="sec" data-carte="france">← France</button></div>
+        ${zoom.vins.length ? `<table class="regions"><thead><tr><th>Appellation</th><th class="num">Bouteilles</th><th class="num">Réf.</th></tr></thead><tbody>
+          ${points.map(p => `<tr tabindex="0" data-app="p:${esc(p.nom)}" class="${appSel === 'p:' + p.nom ? 'sel' : ''}">
+            <td><span class="pastille" style="background:var(--s1)"></span>${hl(p.nom)}${p.region !== zoom.r.nom ? ` <span class="badge b-bas" title="Appellation située en ${esc(p.region)}">${esc(p.region)}</span>` : ''}</td>
+            <td class="num">${nb(p.btl)}</td><td class="num">${p.vins.length}</td></tr>`).join('')}
+          ${Object.keys(GROUPES_APP).filter(g => groupes[g]).map(g => `<tr tabindex="0" data-app="g:${g}" class="zero ${appSel === 'g:' + g ? 'sel' : ''}">
+            <td><span class="pastille" style="background:transparent; border:1px dashed var(--muted)"></span>${GROUPES_APP[g][0]}
+              <div class="sous" style="font-size:.75rem">${GROUPES_APP[g][1]} : ${esc([...new Set(groupes[g].map(v => v.appellation).filter(Boolean))].join(', ') || '—')}</div></td>
+            <td class="num">${nb(btlGroupe(groupes[g]))}</td><td class="num">${groupes[g].length}</td></tr>`).join('')}
+        </tbody></table>` : ''}
+        ${ecarts.length ? `<div class="legende" style="margin-top:12px"><span>⚠ ${esc(ecarts.join(', '))} : ${ecarts.length > 1 ? 'appellations situées' : 'appellation située'} hors de la région ${esc(zoom.r.nom)} (vérifier le champ Région des fiches)</span></div>` : ''}
+      </div>
+      <div class="graph">
+        <div class="tete"><div><h3>${appSel ? esc(titreSel) : 'Tous les vins de la région'}</h3></div>
+          ${appSel ? `<button class="lien" data-carte="tout">✕</button>` : ''}</div>
+        ${(vinsSel || zoom.vins).length ? `<ul class="prio">${triVins(vinsSel || zoom.vins).map(ligneVin).join('')}</ul>` : '<div class="vide-g">Aucun vin</div>'}
+      </div>`;
+  } else {
+    const lignes = [...stats.values()].sort((a, b) => b.btl - a.btl || a.r.nom.localeCompare(b.r.nom, 'fr'));
+    const totBtl = lignes.reduce((s, x) => s + x.btl, 0);
+    panneau = `
+      <div class="graph">
+        <div class="tete"><div><h3>Régions viticoles</h3><div class="st">${pluriel(totBtl, 'bouteille')} placées sur la carte · cliquer pour zoomer</div></div></div>
+        <table class="regions"><thead><tr><th>Région</th><th class="num">Bouteilles</th><th class="num">Part</th><th class="num">Valeur</th></tr></thead>
+        <tbody>${lignes.map(x => `<tr tabindex="0" data-region="${esc(x.r.nom)}" class="${x.btl ? '' : 'zero'}">
+          <td><span class="pastille" style="background:${remplissage(x)}"></span>${esc(x.r.nom)}</td>
+          <td class="num">${x.btl ? nb(x.btl) : '—'}</td><td class="num">${x.btl ? pct(x.btl, totBtl) : ''}</td><td class="num">${x.btl ? euro0(x.val) : ''}</td></tr>`).join('')}</tbody></table>
+      </div>
+      ${horsCarte.length ? `<div class="graph"><div class="tete"><div><h3>Hors carte (${horsCarte.length})</h3>
+        <div class="st">Région vide ou non reconnue : renseignez-la dans la fiche (ex. « Loire », « Bordeaux »)</div></div></div>
+        <ul class="prio">${triVins(horsCarte).map(ligneVin).join('')}</ul></div>` : ''}`;
+  }
+
+  el.innerHTML = `<div class="carte-wrap">
+    <div class="carte-svg">
+      <svg class="${zoom ? 'zoome' : ''}" viewBox="${vb.join(' ')}" role="img" aria-label="Carte des régions viticoles françaises">${chemins}${contours}${etiquettes}${marques}</svg>
+      <div class="legende">
+        ${zoom ? `<span><i class="cle" style="background:var(--s1); border-radius:50%"></i>Appellation · taille = bouteilles en cave</span>
+          <span>Position approximative (cœur du vignoble)</span>`
+        : `<span>Bouteilles en cave : 1<i class="degrade"></i>${nb(max)}</span>
+          <span><i class="cle" style="background:color-mix(in srgb, var(--neutre) 45%, var(--carte))"></i>Région viticole sans bouteille</span>
+          <span><i class="cle" style="background:color-mix(in srgb, var(--neutre) 14%, var(--carte)); border:1px solid var(--grille)"></i>Hors région viticole</span>`}
+      </div>
+      <div class="legende"><span>${zoom ? 'Cliquer sur un point pour voir ses vins · cliquer ailleurs sur la carte pour changer de région' : 'Régions approximées par départements · cliquer sur une région pour zoomer sur ses appellations'}</span></div>
+    </div>
+    <div class="carte-panneau">${panneau}</div>
+  </div>`;
+  placerEtiquettes($('#vue-carte svg'), points, k, vb);
+  animerCadrage($('#vue-carte svg'), vbCourant, vb);
+  vbCourant = vb;
+}
+const choisirRegion = nom => { regionSel = regionSel === nom ? null : nom; appSel = null; afficher(); };
+$('#vue-carte').addEventListener('click', e => {
+  const c = e.target.closest('[data-carte]');
+  if (c) { if (c.dataset.carte === 'france') { regionSel = null; appSel = null; } else appSel = null; afficher(); return; }
+  const a = e.target.closest('[data-action]');
+  if (a) return executer(a.dataset.action);
+  const app = e.target.closest('[data-app]');
+  if (app) { appSel = appSel === app.dataset.app ? null : app.dataset.app; afficher(); return; }
+  const r = e.target.closest('[data-region]');
+  if (r) choisirRegion(r.dataset.region);
+});
+$('#vue-carte').addEventListener('keydown', e => {
+  const t = e.target.closest('[data-region], [data-app]');
+  if (t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); t.dispatchEvent(new MouseEvent('click', { bubbles: true })); }
+});
+// Survol : la région entière ressort, les autres s'estompent (vue France)
+$('#vue-carte').addEventListener('pointerover', e => {
+  const svg = $('#vue-carte svg');
+  if (!svg || svg.classList.contains('zoome')) return;
+  const p = e.target.closest('.dep.vin');
+  svg.classList.toggle('focus', !!p);
+  svg.querySelectorAll('.dep.vin').forEach(d => d.classList.toggle('actif', !!p && d.dataset.region === p.dataset.region));
+});
+
+// ---------- Vue historique des sorties ----------
+let histAnnee = '', histNote = '', histCommentes = false;
+const champsVisiblesVin = v => [v.nom, v.appellation, v.region, v.position, v.millesime, v.couleur, v.lieuAchat];
+function sortiesFiltrees() {
+  const q = requete();
+  let l = filtrer({ avecEpuises: true, sansRecherche: true }).flatMap(v => (v.sorties || []).map(s => ({ s, v })));
+  // La recherche porte sur le vin ou sur le commentaire de la sortie elle-même
+  if (q) l = l.filter(({ s, v }) => champsVisiblesVin(v).some(x => normaliser(x).includes(q)) || normaliser(s.commentaire).includes(q));
+  return l;
+}
+function afficherHistorique() {
+  const el = $('#vue-historique');
+  const toutes = sortiesFiltrees();
+  const annees = [...new Set(toutes.map(x => (x.s.date || '').slice(0, 4)).filter(Boolean))].sort().reverse();
+  if (histAnnee && !annees.includes(histAnnee)) histAnnee = '';
+  let l = toutes.filter(({ s }) =>
+    (!histAnnee || (s.date || '').startsWith(histAnnee)) &&
+    (!histNote || (histNote === '0' ? !s.note : histNote === '5' ? s.note === 5 : (s.note || 0) >= Number(histNote))) &&
+    (!histCommentes || (s.commentaire || '').trim()));
+  l.sort((a, b) => (b.s.date || '').localeCompare(a.s.date || '') || String(b.s.id).localeCompare(String(a.s.id)));
+
+  const totalSorties = vins.reduce((s, v) => s + (v.sorties || []).length, 0);
+  if (!totalSorties) {
+    el.innerHTML = `<div class="vide">Aucune sortie enregistrée pour le moment.<br><br>Ouvrez un vin (onglet ☰ Lignes) et cliquez sur « 🍷 Sortir une bouteille » :<br>la date, l'appréciation et votre commentaire apparaîtront ici.</div>`;
+    return;
+  }
+  const btl = l.reduce((s, x) => s + (x.s.nombre || 1), 0);
+  const valeurBue = l.reduce((s, x) => s + (x.s.nombre || 1) * (Number(x.v.prix) || 0), 0);
+  const notees = l.filter(x => x.s.note);
+  const moyenne = notees.length ? notees.reduce((s, x) => s + x.s.note, 0) / notees.length : 0;
+  const parVin = new Map();
+  for (const x of notees) { const m = parVin.get(x.v.id) || { v: x.v, n: 0, t: 0 }; m.n++; m.t += x.s.note; parVin.set(x.v.id, m); }
+  const prefere = [...parVin.values()].sort((a, b) => b.t / b.n - a.t / a.n || b.n - a.n)[0];
+
+  const groupes = new Map();
+  for (const x of l) { const k = (x.s.date || '').slice(0, 7) || 'sans-date'; if (!groupes.has(k)) groupes.set(k, []); groupes.get(k).push(x); }
+  const titreMois = k => k === 'sans-date' ? 'Sans date' : new Date(k + '-01T00:00:00').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  const entree = ({ s, v }) => {
+    const d = s.date ? new Date(s.date + 'T00:00:00') : null;
+    return `<div class="hist" data-action="vin:${v.id}" tabindex="0">
+      <div class="hist-date">${d ? `<b>${d.getDate()}</b><span>${d.toLocaleDateString('fr-FR', { weekday: 'short' })}</span>` : '<b>?</b>'}</div>
+      <div class="hist-corps">
+        <div class="hist-tete">
+          <span class="pastille" style="background:${couleurVin(v.couleur)}"></span><b>${hl(v.nom)}</b> ${hl(v.millesime || '')}
+          <span class="sous">${hl([v.appellation, v.region].filter(Boolean).join(' · '))}</span>
+          ${(s.nombre || 1) > 1 ? `<span class="badge b-inconnu">× ${s.nombre}</span>` : ''}
+          <span class="etoiles" title="${s.note ? s.note + '/5' : 'Pas de note'}">${s.note ? etoiles(s.note) : ''}</span>
+        </div>
+        ${(s.commentaire || '').trim() ? `<div class="hist-com">${hl(s.commentaire)}</div>` : '<div class="sous" style="font-style:italic">Pas de commentaire</div>'}
+      </div>
+      <button class="hist-suppr" data-vin="${v.id}" data-sid="${esc(s.id)}" title="Supprimer cette sortie (remet en stock)" aria-label="Supprimer cette sortie">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>
+      </button>
+    </div>`;
+  };
+  el.innerHTML = `
+    <div class="db-haut hist-tuiles">
+      <div class="tuile"><div class="l">Sorties</div><div class="v">${nb(l.length)}</div><div class="d">${pluriel(btl, 'bouteille')} bue${btl > 1 ? 's' : ''}</div></div>
+      <div class="tuile"><div class="l">Valeur bue</div><div class="v">${euro0(valeurBue)}</div><div class="d">au prix d'achat</div></div>
+      <div class="tuile"><div class="l">Appréciation moyenne</div><div class="v">${moyenne ? moyenne.toFixed(1).replace('.', ',') + ' / 5' : '—'}</div><div class="d">${notees.length ? `<span class="etoiles">${etoiles(Math.round(moyenne))}</span> sur ${pluriel(notees.length, 'sortie')} notée${notees.length > 1 ? 's' : ''}` : 'aucune note'}</div></div>
+      <div class="tuile ${prefere ? 'cliquable' : ''}" ${prefere ? `data-action="vin:${prefere.v.id}"` : ''}><div class="l">Le mieux noté</div><div class="v" style="font-size:1.15rem">${prefere ? esc(prefere.v.nom) + (prefere.v.millesime ? ' ' + esc(prefere.v.millesime) : '') : '—'}</div><div class="d">${prefere ? `${(prefere.t / prefere.n).toFixed(1).replace('.', ',')} / 5 · ${pluriel(prefere.n, 'note')}` : ''}</div></div>
+    </div>
+    <div class="barre hist-filtres">
+      <select id="h-annee"><option value="">Toutes les années</option>${annees.map(a => `<option ${a === histAnnee ? 'selected' : ''}>${a}</option>`).join('')}</select>
+      <select id="h-note">
+        ${[['', 'Toutes les notes'], ['5', '★★★★★ uniquement'], ['4', '★★★★ et plus'], ['3', '★★★ et plus'], ['0', 'Sans note']].map(([v, t]) => `<option value="${v}" ${v === histNote ? 'selected' : ''}>${t}</option>`).join('')}
+      </select>
+      <label class="chk"><input type="checkbox" id="h-com" ${histCommentes ? 'checked' : ''}> Avec commentaire uniquement</label>
+      <button class="sec" id="h-csv" style="margin-left:auto">Exporter les sorties (CSV)</button>
+    </div>
+    ${l.length ? [...groupes].map(([k, xs]) => `<div class="hist-mois">
+        <h3>${titreMois(k)} <span class="sous">· ${pluriel(xs.reduce((s, x) => s + (x.s.nombre || 1), 0), 'bouteille')}</span></h3>
+        ${xs.map(entree).join('')}
+      </div>`).join('') : '<div class="vide">Aucune sortie ne correspond aux filtres.</div>'}`;
+}
+$('#vue-historique').addEventListener('change', e => {
+  if (e.target.id === 'h-annee') histAnnee = e.target.value;
+  else if (e.target.id === 'h-note') histNote = e.target.value;
+  else if (e.target.id === 'h-com') histCommentes = e.target.checked;
+  else return;
+  afficher();
+});
+$('#vue-historique').addEventListener('click', async e => {
+  if (e.target.closest('#h-csv')) return exporterHistorique();
+  const b = e.target.closest('.hist-suppr');
+  if (b) {
+    const v = vins.find(x => x.id === b.dataset.vin), s = v?.sorties?.find(x => String(x.id) === b.dataset.sid);
+    if (s) await supprimerSortie(v, s, b.closest('.hist'));
+    return;
+  }
+  const a = e.target.closest('[data-action]');
+  if (a) executer(a.dataset.action);
+});
+$('#vue-historique').addEventListener('keydown', e => {
+  if (e.target.closest('.hist-suppr')) return;
+  const a = e.target.closest('[data-action]');
+  if (a && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); executer(a.dataset.action); }
+});
+function exporterHistorique() {
+  const cell = x => {
+    if (typeof x === 'number') return String(x).replace('.', ',');
+    const s = String(x ?? '');
+    return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const l = sortiesFiltrees().sort((a, b) => (b.s.date || '').localeCompare(a.s.date || ''));
+  const lignes = [['Date', 'Vin', 'Millésime', 'Appellation', 'Région', 'Couleur', 'Bouteilles', 'Note /5', 'Commentaire', 'Prix unitaire'].join(';'),
+    ...l.map(({ s, v }) => [dateFr(s.date), v.nom, v.millesime, v.appellation, v.region, v.couleur, s.nombre || 1, s.note || '', s.commentaire, v.prix].map(cell).join(';'))];
+  telecharger('﻿' + lignes.join('\r\n'), `sorties-${aujourdhui()}.csv`, 'text/csv');
+}
+
+// ---------- Infobulle ----------
+const tip = $('#tip');
+function placerTip(x, y) {
+  const r = tip.getBoundingClientRect();
+  let left = x + 14, top = y + 14;
+  if (left + r.width > innerWidth - 8) left = x - r.width - 14;
+  if (top + r.height > innerHeight - 8) top = y - r.height - 14;
+  tip.style.left = Math.max(8, left) + 'px'; tip.style.top = Math.max(8, top) + 'px';
+}
+function montrerTip(el, x, y) { tip.textContent = el.dataset.tip; tip.classList.add('vis'); placerTip(x, y); }
+function cacherTip() { tip.classList.remove('vis'); }
+document.addEventListener('pointerover', e => {
+  const t = e.target.closest && e.target.closest('[data-tip]');
+  if (t) montrerTip(t, e.clientX, e.clientY); else cacherTip();
+});
+document.addEventListener('pointermove', e => { if (tip.classList.contains('vis')) placerTip(e.clientX, e.clientY); });
+document.addEventListener('focusin', e => {
+  const t = e.target.closest && e.target.closest('[data-tip]');
+  if (t) { const r = t.getBoundingClientRect(); montrerTip(t, r.left + r.width / 2, r.top); } else cacherTip();
+});
+document.addEventListener('scroll', cacherTip, true);
+
+// ---------- Onglets, thème ----------
+function changerVue(v) {
+  vue = v; localStorage.setItem('vue', v);
+  afficher();
+  scrollTo({ top: 0 });
+}
+$('#onglets').addEventListener('click', e => { const b = e.target.closest('[data-vue]'); if (b) changerVue(b.dataset.vue); });
+// Thème effectif : choix enregistré, sinon réglage du système
+const themeActuel = () => document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+// Le bouton propose l'autre mode : « Mode sombre » quand on est en clair, et inversement
+function majBoutonTheme() {
+  const sombre = themeActuel() === 'dark';
+  $('#btn-theme').innerHTML = sombre ? '☀️ <span class="libelle">Mode clair</span>' : '🌙 <span class="libelle">Mode sombre</span>';
+}
+$('#btn-theme').onclick = () => {
+  const nouveau = themeActuel() === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = nouveau;
+  localStorage.setItem('theme', nouveau);
+  majBoutonTheme();
+};
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', majBoutonTheme);
+majBoutonTheme();
+$('#btn-reset').onclick = () => {
+  $('#recherche').value = ''; $('#f-couleur').value = ''; $('#f-region').value = ''; $('#f-bas').checked = false;
+  afficher();
+};
+
+// ---------- Visionneuse photo ----------
+function agrandirPhoto(id) {
+  const v = vins.find(x => x.id === id);
+  if (!v || !v.photo) return;
+  $('#visionneuse img').src = v.photo;
+  $('#visionneuse img').alt = v.nom;
+  $('#visionneuse .legende-photo').textContent = [v.nom, v.millesime].filter(Boolean).join(' ');
+  clearTimeout($('#visionneuse')._finAnim);
+  $('#visionneuse').classList.remove('fermeture');
+  $('#visionneuse').classList.add('ouvert');
+  cacherTip();
+  majDefilement();
+}
+function fermerPhoto() {
+  const v = $('#visionneuse');
+  if (!v.classList.contains('ouvert') || v.classList.contains('fermeture')) return;
+  v.classList.add('fermeture');
+  masquerApresAnimation(v, 240, () => $('#visionneuse img').removeAttribute('src'));
+}
+$('#visionneuse').addEventListener('click', fermerPhoto);
+$('#detail-contenu').addEventListener('click', e => { if (e.target.closest('.grande-photo.photo-ok')) agrandirPhoto(vinCourant?.id); });
+
+// ---------- Listes déroulantes personnalisées ----------
+// Chaque <select> visible est caché et doublé d'une liste aux couleurs de l'app. Le <select> reste la référence :
+// sa valeur et ses événements « input » / « change » sont inchangés pour le reste du code.
+const SVG_CHEVRON = '<svg class="liste-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+const SVG_COCHE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+let listeOuverte = null;
+function contenuOption(sel, opt) {
+  // Pastille de couleur devant Rouge, Blanc, Bulles… dans les listes de couleur
+  const couleur = (sel.id === 'f-couleur' || sel.name === 'couleur') && VAR_COULEUR[opt.value];
+  return (couleur ? `<span class="pastille" style="background:${couleurVin(opt.value)}"></span>` : '') + `<span>${esc(opt.textContent)}</span>`;
+}
+function ameliorerListes() {
+  document.querySelectorAll('select:not([hidden]):not(.liste-native)').forEach(sel => {
+    sel.classList.add('liste-native');
+    const w = document.createElement('div');
+    w.className = 'liste';
+    w.innerHTML = `<button type="button" class="liste-bouton" aria-haspopup="listbox" aria-expanded="false"><span class="liste-valeur"></span>${SVG_CHEVRON}</button>
+      <div class="liste-menu" role="listbox" tabindex="-1"></div>`;
+    w._select = sel;
+    sel.after(w);
+    sel.addEventListener('change', () => synchroniserListe(w));
+    const bouton = w.querySelector('.liste-bouton'), menu = w.querySelector('.liste-menu');
+    bouton.addEventListener('click', () => w.classList.contains('ouverte') ? fermerListe(w) : ouvrirListe(w));
+    bouton.addEventListener('keydown', e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); ouvrirListe(w); } });
+    menu.addEventListener('click', e => { const o = e.target.closest('.liste-option'); if (o) choisirOption(w, +o.dataset.i); });
+    menu.addEventListener('pointermove', e => { const o = e.target.closest('.liste-option'); if (o) activerOption(w, +o.dataset.i, false); });
+    menu.addEventListener('keydown', e => naviguerListe(e, w));
+    synchroniserListe(w);
+  });
+}
+function synchroniserListe(w) {
+  const sel = w._select, i0 = sel.selectedIndex;
+  w.querySelector('.liste-valeur').innerHTML = i0 >= 0 ? contenuOption(sel, sel.options[i0]) : '';
+  w.querySelector('.liste-menu').innerHTML = [...sel.options].map((o, i) =>
+    `<div class="liste-option ${i === i0 ? 'sel' : ''}" role="option" aria-selected="${i === i0}" data-i="${i}">${contenuOption(sel, o)}<span class="coche">${SVG_COCHE}</span></div>`).join('');
+}
+// Après chaque affichage : nouvelles listes à doubler, valeurs à recopier, listes orphelines à retirer
+function synchroniserListes() {
+  ameliorerListes();
+  document.querySelectorAll('.liste').forEach(w => {
+    if (!w._select?.isConnected) return w.remove();
+    if (w !== listeOuverte) synchroniserListe(w);
+  });
+}
+function ouvrirListe(w) {
+  if (listeOuverte && listeOuverte !== w) fermerListe(listeOuverte, true);
+  synchroniserListe(w);
+  clearTimeout(w._finAnim);
+  w.classList.remove('fermeture');
+  // Pas assez de place en dessous (et plus au-dessus) : le menu s'ouvre vers le haut
+  const r = w.getBoundingClientRect(), h = Math.min(300, w._select.options.length * 38 + 14);
+  w.classList.toggle('vers-le-haut', innerHeight - r.bottom < h + 12 && r.top > innerHeight - r.bottom);
+  w.classList.add('ouverte');
+  w.querySelector('.liste-bouton').setAttribute('aria-expanded', 'true');
+  listeOuverte = w;
+  activerOption(w, Math.max(0, w._select.selectedIndex), true);
+  w.querySelector('.liste-menu').focus({ preventScroll: true });
+  cacherTip();
+}
+function fermerListe(w, sansFocus = false) {
+  if (!w.classList.contains('ouverte')) return;
+  w.classList.remove('ouverte');
+  w.querySelector('.liste-bouton').setAttribute('aria-expanded', 'false');
+  if (listeOuverte === w) listeOuverte = null;
+  if (!sansAnimation()) { w.classList.add('fermeture'); w._finAnim = setTimeout(() => w.classList.remove('fermeture'), 130); }
+  if (!sansFocus) w.querySelector('.liste-bouton').focus({ preventScroll: true });
+}
+function activerOption(w, i, defiler) {
+  const opts = w.querySelectorAll('.liste-option');
+  opts.forEach((o, k) => o.classList.toggle('active', k === i));
+  w._actif = i;
+  if (defiler && opts[i]?.scrollIntoView) opts[i].scrollIntoView({ block: 'nearest' });
+}
+function choisirOption(w, i) {
+  const sel = w._select, change = sel.selectedIndex !== i;
+  sel.selectedIndex = i;
+  fermerListe(w);
+  synchroniserListe(w);
+  if (change) {
+    sel.dispatchEvent(new Event('input', { bubbles: true }));
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+}
+function naviguerListe(e, w) {
+  const n = w._select.options.length;
+  let i = w._actif ?? 0;
+  if (e.key === 'ArrowDown') i = Math.min(n - 1, i + 1);
+  else if (e.key === 'ArrowUp') i = Math.max(0, i - 1);
+  else if (e.key === 'Home') i = 0;
+  else if (e.key === 'End') i = n - 1;
+  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); return choisirOption(w, i); }
+  else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); return fermerListe(w); }  // ne ferme pas la fenêtre en dessous
+  else if (e.key === 'Tab') return fermerListe(w, true);
+  else return;
+  e.preventDefault();
+  activerOption(w, i, true);
+}
+document.addEventListener('pointerdown', e => { if (listeOuverte && !listeOuverte.contains(e.target)) fermerListe(listeOuverte, true); });
+
+// ---------- Modales ----------
+// La dernière fenêtre ouverte passe toujours au premier plan (ex. « Modifier » depuis la fiche d'un vin)
+let zModale = 10;
+// Pas de défilement de la page derrière une fenêtre ouverte
+const majDefilement = () => document.body.classList.toggle('modale-ouverte', !!document.querySelector('.fond-modale.ouvert, #visionneuse.ouvert'));
+// Fermeture animée : la classe « fermeture » joue l'animation, puis la fenêtre est masquée
+const sansAnimation = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+function masquerApresAnimation(el, duree, apres) {
+  clearTimeout(el._finAnim);
+  el._finAnim = setTimeout(() => {
+    el.classList.remove('ouvert', 'fermeture', 'validee');
+    if (apres) apres();
+    majDefilement();
+  }, sansAnimation() ? 0 : duree);
+}
+const ouvrir = id => {
+  const m = $(id);
+  clearTimeout(m._finAnim);
+  m.classList.remove('fermeture', 'validee');
+  m.style.zIndex = ++zModale;
+  m.classList.add('ouvert');
+  cacherTip(); majDefilement();
+};
+function fermerElement(m, { validee = false } = {}) {
+  if (!m.classList.contains('ouvert') || m.classList.contains('fermeture')) return;
+  if (m.id === 'm-confirm') repondreConfirm(false);   // fermée sans valider = « Annuler »
+  m.classList.add('fermeture');
+  if (validee) m.classList.add('validee');
+  masquerApresAnimation(m, validee ? 340 : 240);
+}
+const fermer = id => fermerElement($(id));
+const modaleDuDessus = () => [...document.querySelectorAll('.fond-modale.ouvert:not(.fermeture)')]
+  .sort((x, y) => (Number(x.style.zIndex) || 0) - (Number(y.style.zIndex) || 0)).pop();
+// Fenêtres de saisie : un clic à côté ne les ferme pas (la saisie serait perdue) ; ✕, Annuler ou Échap
+const FENETRES_SAISIE = ['m-form', 'm-sortie'];
+document.querySelectorAll('.fond-modale').forEach(m => {
+  m.addEventListener('click', e => {
+    if (e.target.closest('[data-fermer]') || (e.target === m && !FENETRES_SAISIE.includes(m.id))) fermerElement(m);
+  });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if ($('#visionneuse').classList.contains('ouvert')) { fermerPhoto(); return; }
+    const m = modaleDuDessus();
+    if (m) fermerElement(m);
+  }
+});
+
+// Fenêtre de confirmation (remplace confirm() / alert() du navigateur) : renvoie une promesse true / false
+const ICONES = {
+  danger: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>',
+  info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>',
+};
+let reponseConfirm = null;
+function repondreConfirm(valeur) { const r = reponseConfirm; reponseConfirm = null; if (r) r(valeur); }
+function confirmer({ titre, message = '', ok = 'Supprimer', annuler = 'Annuler', danger = true }) {
+  repondreConfirm(false);
+  $('#confirm-icone').className = 'confirm-icone ' + (danger ? 'danger' : 'info');
+  $('#confirm-icone').innerHTML = ICONES[danger ? 'danger' : 'info'];
+  $('#confirm-titre').textContent = titre;
+  $('#confirm-message').textContent = message;
+  $('#confirm-oui').textContent = ok;
+  $('#confirm-oui').className = danger ? 'btn-danger' : '';
+  $('#confirm-non').textContent = annuler || '';
+  $('#confirm-non').hidden = !annuler;
+  const avant = document.activeElement;
+  ouvrir('#m-confirm');
+  // Focus sur le choix sans risque : « Annuler » pour une suppression, « OK » pour un simple message
+  (annuler ? $('#confirm-non') : $('#confirm-oui')).focus();
+  return new Promise(res => { reponseConfirm = v => { avant?.focus?.({ preventScroll: true }); res(v); }; });
+}
+const informer = (titre, message) => confirmer({ titre, message, ok: 'OK', annuler: null, danger: false });
+$('#confirm-oui').addEventListener('click', () => {
+  const r = reponseConfirm; reponseConfirm = null;
+  fermerElement($('#m-confirm'), { validee: true });   // animation « la fenêtre tombe »
+  if (r) r(true);
+});
+
+// Suppression d'une sortie (fiche du vin ou historique) : les bouteilles reviennent en stock
+async function supprimerSortie(v, s, ligne) {
+  const n = s.nombre || 1;
+  const ok = await confirmer({
+    titre: 'Supprimer cette sortie ?',
+    message: `${v.nom}${v.millesime ? ' ' + v.millesime : ''} · sortie du ${dateFr(s.date) || 'date inconnue'}\n`
+      + `${n > 1 ? `Les ${n} bouteilles seront remises` : 'La bouteille sera remise'} en stock.`,
+  });
+  if (!ok) return false;
+  if (ligne && !sansAnimation()) {
+    ligne.style.maxHeight = ligne.offsetHeight + 'px';   // point de départ du repli
+    ligne.classList.add('disparition');
+    await new Promise(r => setTimeout(r, 400));
+  }
+  v.sorties = v.sorties.filter(x => x !== s);
+  v.stock = stockDe(v) + n;
+  await sauver(v);
+  await recharger();
+  return true;
+}
+
+// ---------- Formulaire ajout / édition ----------
+const form = $('#form-vin');
+function majApercu() {
+  $('#apercu-photo').style.backgroundImage = photoTemp ? `url(${photoTemp})` : '';
+  $('#zone-photo').classList.toggle('a-photo', !!photoTemp);
+  $('#btn-retirer-photo').hidden = !photoTemp;
+}
+function ouvrirFormulaire(vin) {
+  enEdition = vin || null;
+  form.reset();
+  $('#form-titre').textContent = vin ? 'Modifier le vin' : 'Ajouter un vin';
+  if (vin) {
+    for (const el of form.elements) {
+      if (!el.name || !(el.name in vin)) continue;
+      if (el.type === 'radio') el.checked = el.value === vin[el.name];   // pastilles de couleur
+      else el.value = vin[el.name] ?? '';
+    }
+  } else {
+    form.elements.dateAchat.value = new Date().toLocaleDateString('fr-FR');
+  }
+  photoTemp = vin ? vin.photo || null : null;
+  $('#input-photo').value = '';
+  majApercu();
+  ouvrir('#m-form');
+  synchroniserListes();
+  form.elements.nom.focus();
+}
+$('#btn-ajouter').onclick = () => ouvrirFormulaire();
+// Glisser-déposer une image sur la zone photo
+const zonePhoto = $('#zone-photo');
+['dragenter', 'dragover'].forEach(t => zonePhoto.addEventListener(t, e => { e.preventDefault(); zonePhoto.classList.add('survol'); }));
+['dragleave', 'drop'].forEach(t => zonePhoto.addEventListener(t, () => zonePhoto.classList.remove('survol')));
+zonePhoto.addEventListener('drop', async e => {
+  e.preventDefault();
+  const f = [...(e.dataTransfer?.files || [])].find(x => x.type.startsWith('image/'));
+  if (!f) return;
+  try { photoTemp = await lireImage(f); majApercu(); }
+  catch { informer('Photo illisible', 'Impossible de lire cette image. Essayez une photo au format JPEG ou PNG.'); }
+});
+$('#input-photo').onchange = async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  try { photoTemp = await lireImage(f); majApercu(); }
+  catch { informer('Photo illisible', 'Impossible de lire cette image. Essayez une photo au format JPEG ou PNG.'); }
+};
+$('#btn-retirer-photo').onclick = () => { photoTemp = null; $('#input-photo').value = ''; majApercu(); };
+
+form.onsubmit = async e => {
+  e.preventDefault();
+  const d = Object.fromEntries(new FormData(form));
+  const num = k => d[k] === '' ? '' : Number(d[k]);
+  const vin = {
+    ...(enEdition || { id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random(), sorties: [], creeLe: new Date().toISOString() }),
+    nom: d.nom.trim(), appellation: d.appellation.trim(), region: d.region.trim(), couleur: d.couleur,
+    millesime: num('millesime'), apogee: num('apogee'), degre: num('degre'), seuil: num('seuil'),
+    position: d.position.trim(), quantite: num('quantite'),
+    stock: d.stock === '' ? (Number(d.quantite) || 0) : Number(d.stock),
+    prix: num('prix'), dateAchat: d.dateAchat.trim(), lieuAchat: d.lieuAchat.trim(), notes: d.notes.trim(),
+    photo: photoTemp,
+  };
+  await sauver(vin);
+  fermer('#m-form');
+  await recharger();
+  if (enEdition && $('#m-detail').classList.contains('ouvert')) afficherDetail(vin.id);
+};
+
+// ---------- Détail ----------
+function afficherDetail(id) {
+  const v = vins.find(x => x.id === id);
+  if (!v) return;
+  vinCourant = v;
+  const a = etatApogee(v);
+  const sorties = [...(v.sorties || [])].sort((x, y) => (y.date || '').localeCompare(x.date || ''));
+  const notees = sorties.filter(s => s.note);
+  const moyenne = notees.length ? (notees.reduce((s, x) => s + x.note, 0) / notees.length).toFixed(1) : null;
+  const ligne = (l, val) => `<tr><td>${l}</td><td>${val || '—'}</td></tr>`;
+
+  $('#detail-contenu').innerHTML = `
+    <h2>${hl(v.nom)} ${v.millesime ? hl(v.millesime) : ''}</h2>
+    <div class="detail-tete">
+      <div class="grande-photo ${v.photo ? 'photo-ok' : ''}" style="${v.photo ? `background-image:url(${v.photo})` : ''}" ${v.photo ? 'title="Agrandir la photo"' : ''}>${v.photo ? '' : '🍷'}</div>
+      <div class="infos">
+        <table>
+          ${ligne('Appellation', hl(v.appellation))}
+          ${ligne('Région', hl(v.region))}
+          ${ligne('Couleur', `<span class="pastille" style="background:${couleurVin(v.couleur)}"></span>${hl(v.couleur)}`)}
+          ${ligne('Millésime', hl(v.millesime))}
+          ${ligne('Apogée', `${esc(v.apogee) || '—'} <span class="badge ${a.cls}">${a.txt}</span>`)}
+          ${ligne('Degré', v.degre !== '' && v.degre != null ? esc(v.degre) + ' % vol.' : '')}
+          ${ligne('Position', hl(v.position))}
+          ${ligne('Quantité achetée', esc(v.quantite))}
+          ${ligne('Stock', `<b>${stockDe(v)}</b> bouteille(s)${stockBas(v) ? ' <span class="badge b-bas">Stock bas</span>' : ''}`)}
+          ${ligne("Seuil d'alerte", esc(v.seuil))}
+          ${ligne("Prix d'achat", v.prix !== '' && v.prix != null ? euro(v.prix) + ' / btl' : '')}
+          ${ligne('Valeur en stock', `<b>${euro(valeur(v))}</b>`)}
+          ${ligne("Date d'achat", esc(dateAchatFr(v.dateAchat)))}
+          ${ligne("Lieu d'achat", hl(v.lieuAchat))}
+          ${moyenne ? ligne('Appréciation moyenne', `<span class="etoiles">${etoiles(Math.round(moyenne))}</span> ${moyenne}/5`) : ''}
+        </table>
+        ${v.notes ? `<p style="white-space:pre-wrap; font-size:.92rem">${hl(v.notes)}</p>` : ''}
+      </div>
+    </div>
+    <div class="actions" style="justify-content:flex-start">
+      <button id="d-sortir" ${stockDe(v) > 0 ? '' : 'disabled style="opacity:.5;cursor:not-allowed"'}>🍷 Sortir une bouteille</button>
+      <button class="sec" id="d-modifier">Modifier</button>
+      <button class="danger" id="d-supprimer">Supprimer</button>
+    </div>
+    <div class="sorties">
+      <h3>Sorties (${sorties.reduce((s, x) => s + (x.nombre || 1), 0)})</h3>
+      ${sorties.length ? sorties.map(s => `
+        <div class="sortie">
+          <div class="entete">
+            <span>${dateFr(s.date)}${(s.nombre || 1) > 1 ? ` · ${s.nombre} bouteilles` : ''}</span>
+            <span><span class="etoiles">${s.note ? etoiles(s.note) : ''}</span>
+              <button class="suppr-sortie" data-sid="${s.id}" title="Annuler cette sortie (remet en stock)">✕</button></span>
+          </div>
+          ${s.commentaire ? `<div style="white-space:pre-wrap; margin-top:4px">${hl(s.commentaire)}</div>` : ''}
+        </div>`).join('') : '<p class="sous">Aucune sortie pour le moment.</p>'}
+    </div>`;
+
+  $('#d-sortir').onclick = () => { if (stockDe(v) > 0) ouvrirSortie(); };
+  $('#d-modifier').onclick = () => ouvrirFormulaire(v);
+  $('#d-supprimer').onclick = async () => {
+    const nbS = (v.sorties || []).length;
+    const ok = await confirmer({
+      titre: 'Supprimer ce vin ?',
+      message: `« ${v.nom}${v.millesime ? ' ' + v.millesime : ''} » sera définitivement supprimé`
+        + (nbS ? `, avec ses ${pluriel(nbS, 'sortie')}.` : '.') + '\nCette action est irréversible.',
+      ok: 'Supprimer le vin',
+    });
+    if (!ok) return;
+    await supprimer(v.id);
+    fermer('#m-detail');
+    recharger();
+  };
+  document.querySelectorAll('.suppr-sortie').forEach(b => b.onclick = async () => {
+    const s = v.sorties.find(x => String(x.id) === b.dataset.sid);
+    if (s && await supprimerSortie(v, s, b.closest('.sortie'))) afficherDetail(v.id);
+  });
+  ouvrir('#m-detail');
+}
+
+// ---------- Sortie de bouteille ----------
+const formSortie = $('#form-sortie');
+function majEtoiles() {
+  document.querySelectorAll('#choix-etoiles span').forEach(s => s.classList.toggle('on', Number(s.dataset.n) <= noteSortie));
+}
+$('#choix-etoiles').addEventListener('click', e => {
+  const n = Number(e.target.dataset.n);
+  if (!n) return;
+  noteSortie = noteSortie === n ? 0 : n;
+  majEtoiles();
+});
+function ouvrirSortie() {
+  formSortie.reset();
+  formSortie.elements.date.value = aujourdhui();
+  formSortie.elements.nombre.max = stockDe(vinCourant) || 1;
+  noteSortie = 0; majEtoiles();
+  ouvrir('#m-sortie');
+}
+formSortie.onsubmit = async e => {
+  e.preventDefault();
+  const v = vinCourant;
+  const nombre = Math.min(Number(formSortie.elements.nombre.value) || 1, stockDe(v));
+  if (nombre < 1) return;
+  v.sorties = v.sorties || [];
+  v.sorties.push({
+    id: String(Date.now()) + Math.random().toString(36).slice(2),
+    date: formSortie.elements.date.value, nombre, note: noteSortie,
+    commentaire: formSortie.elements.commentaire.value.trim(),
+  });
+  v.stock = stockDe(v) - nombre;
+  await sauver(v);
+  fermer('#m-sortie');
+  await recharger();
+  afficherDetail(v.id);
+};
+
+// ---------- Filtres ----------
+$('#f-tri').addEventListener('input', () => { triDesc = ['valeur', 'stock', 'prix'].includes($('#f-tri').value); afficher(); });
+['#recherche', '#f-couleur', '#f-region', '#f-epuises', '#f-bas'].forEach(s => $(s).addEventListener('input', afficher));
+
+// ---------- Téléchargement de fichier (export de l'historique) ----------
+function telecharger(contenu, nom, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([contenu], { type }));
+  a.download = nom;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+// ---------- Démarrage ----------
+// Import automatique des données de cave.xlsx, une seule fois par navigateur
+async function importInitial() {
+  const d = window.DONNEES_INITIALES;
+  if (!d || !Array.isArray(d.vins) || localStorage.getItem('import-initial-fait')) return;
+  const existants = new Set((await toutLire()).map(v => v.id));
+  for (const v of d.vins) if (!existants.has(v.id)) await sauver(v);
+  localStorage.setItem('import-initial-fait', new Date().toISOString());
+}
+
+// Le n° de référence (colonne ID de l'Excel) n'est plus utilisé : on le retire des fiches existantes
+async function retirerReferences() {
+  for (const v of await toutLire()) if ('ref' in v) { delete v.ref; await sauver(v); }
+}
+
+if (window.Capacitor?.Plugins?.App) {
+  window.Capacitor.Plugins.App.addListener('backButton', () => {
+    if ($('#visionneuse').classList.contains('ouvert')) return fermerPhoto();
+    const m = modaleDuDessus();
+    if (m) return fermerElement(m);
+    if (vue === 'carte' && regionSel) { regionSel = null; appSel = null; return afficher(); }
+    if (vue !== 'dashboard') return changerVue('dashboard');
+    window.Capacitor.Plugins.App.exitApp();
+  });
+}
+
+if (!['dashboard', 'lignes', 'carte', 'historique'].includes(vue)) vue = 'dashboard';
+ouvrirDB().then(importInitial).then(retirerReferences).then(recharger).catch(err => informer('Erreur de base de données', String(err)));
+</script>
+</body>
+</html>
